@@ -1,0 +1,130 @@
+from enum import Enum
+from dataclasses import dataclass
+import socket
+from typing import Optional, Dict, Any
+
+# Configs
+HOST: str = "127.0.0.1"
+PORT: int = 62101
+BUFFER_SIZE: int = 1024
+MSG_SIZE_HEADER: int = 8
+
+
+# Definição do protocolo
+class Command(str, Enum):
+    CREATE = "C"
+    READ = "R"
+    UPDATE = "U"
+    DELETE = "D"
+
+
+class Table(str, Enum):
+    DIRECTOR = "DIR"
+    MOVIE = "MOV"
+
+
+class Response(str, Enum):
+    OK = "OK"
+    ERROR = "ERROR"
+
+
+# Estrutura da mensagem
+MESSAGE_DELIMITER: str = "@"
+PAYLOAD_DELIMITER: str = "|"
+PAYLOAD_ASSIGNER: str = "="
+WILDCARD_ID: int = -1
+
+
+# Data Structure
+@dataclass
+class Message:
+    command: Command
+    table: Table
+    record_id: int
+    payload: Dict[str, Any]
+
+
+# Helpers
+def format_payload(data: Dict[str, Any]) -> str:
+    """Formats a dictionary into a 'key=value,key=value' string."""
+    if not data:
+        return ""
+    return PAYLOAD_DELIMITER.join(
+        f"{key}{PAYLOAD_ASSIGNER}{value}" for key, value in data.items()
+    )
+
+
+def parse_payload(payload_str: str) -> Dict[str, Any]:
+    """Parses a 'key=value,key=value' string into a dictionary."""
+    if not payload_str:
+        return {}
+
+    try:
+        return dict(
+            pair.split(PAYLOAD_ASSIGNER, 1)
+            for pair in payload_str.split(PAYLOAD_DELIMITER)
+        )
+    except ValueError:
+        return {}
+
+
+def create_message(
+    command: Command,
+    table: Table,
+    record_id: int = WILDCARD_ID,
+    payload_dict: Optional[Dict[str, Any]] = None,
+) -> str:
+    payload_str = format_payload(payload_dict) if payload_dict else ""
+    return MESSAGE_DELIMITER.join(
+        [command.value, table.value, str(record_id), payload_str]
+    )
+
+
+def parse_message(message_str: str) -> Optional[Message]:
+    try:
+        parts = message_str.split(MESSAGE_DELIMITER, 3)
+        if len(parts) != 4:
+            return None
+
+        cmd_str, table_str, record_id_str, payload_str = parts
+
+        command = Command(cmd_str)
+        table = Table(table_str)
+        record_id = int(record_id_str)
+        payload = parse_payload(payload_str)
+
+        return Message(
+            command=command, table=table, record_id=record_id, payload=payload
+        )
+    except (ValueError, KeyError):
+        return None
+
+
+def send_message(sock: socket.socket, message: str) -> None:
+    encoded_message = message.encode("utf-8")
+
+    header = len(encoded_message).to_bytes(MSG_SIZE_HEADER, "big")
+    sock.sendall(header + encoded_message)
+
+
+def receive_message(sock: socket.socket) -> Optional[str]:
+    try:
+        # Lê o header e tenta encontrar o tamanho da mensagem
+        header = sock.recv(MSG_SIZE_HEADER)
+        if not header:
+            return None
+        msg_len = int.from_bytes(header, "big")
+
+        chunks = []
+        bytes_received = 0
+        while bytes_received < msg_len:
+            chunk = sock.recv(min(BUFFER_SIZE, msg_len - bytes_received))
+            if not chunk:
+                raise RuntimeError("Socket connection closed prematurely.")
+            chunks.append(chunk)
+            bytes_received += len(chunk)
+
+        return b"".join(chunks).decode("utf-8")
+    except Exception as e:
+        print(f"Error receiving message: {e}")
+        return None
