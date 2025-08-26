@@ -7,13 +7,13 @@ PYTHON = python
 # Usage: make server
 server:
 	@echo "Starting the server..."
-	$(PYTHON) atividadeSockets/server/main.py
+	$(PYTHON) -m server.main
 
 # Target to run the client
 # Usage: make client
 client:
 	@echo "Starting the client..."
-	$(PYTHON) atividadeSockets/client/main.py
+	$(PYTHON) -m client.main
 
 # Phony targets tell make that these are command names, not files.
 .PHONY: server client

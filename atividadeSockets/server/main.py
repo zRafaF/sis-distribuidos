@@ -1,15 +1,10 @@
 from typing import Optional
 import peewee
-import sys, os
 import datetime
 import socket
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(current_dir))
-sys.path.insert(0, project_root)
-
-from atividadeSockets import defines as d
-from atividadeSockets.server.database import core as db_core
+import defines as d
+from server.database import core as db_core
 
 
 tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

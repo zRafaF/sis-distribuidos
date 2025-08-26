@@ -1,15 +1,13 @@
 from typing import Optional
 import peewee
-import sys, os
+import os
 import datetime
 import socket
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(current_dir))
-sys.path.insert(0, project_root)
 
-from atividadeSockets import defines as d
-from atividadeSockets import schema
+import defines as d
+import schema
 
 db = peewee.SqliteDatabase(os.path.join(current_dir, "database.db"))
 
@@ -26,7 +24,7 @@ def handle_create_director(payload: dict) -> Optional[int]:
         return None
 
     new_director = schema.Directors.create(name=payload["name"])
-
+    new_director.save()
     print(f"Created new director with ID {new_director.id}")
     return new_director.id
 

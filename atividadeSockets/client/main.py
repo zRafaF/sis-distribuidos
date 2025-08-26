@@ -1,10 +1,5 @@
 import socket
 
-import sys, os
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(current_dir))
-sys.path.insert(0, project_root)
 
 from atividadeSockets import defines as d
 
@@ -98,6 +93,10 @@ def usr_interaction(sock):
             d.send_message(sock, crud_create(new_data))
 
         elif usr_input == "r":
+            print(
+                "Insira o ID do registro desejado, ou deixe em branco caso \
+                queira ver todos"
+            )
             id = usr_read()
             d.send_message(sock, crud_read(id))
 
