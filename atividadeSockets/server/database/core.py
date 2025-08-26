@@ -3,6 +3,8 @@ import peewee
 import os
 import datetime
 import socket
+import server.database.director as db_director
+import server.database.movie as db_movie
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -19,28 +21,38 @@ def initialize_db() -> None:
     print("Database initialized with Director and Movie tables.")
 
 
-def handle_create_director(payload: dict) -> Optional[int]:
-    if payload.get("name") is None:
-        return None
+def handle_request(message_str: str) -> Optional[str]:
+    """
+    Handle incoming messages from clients.
 
-    new_director = schema.Directors.create(name=payload["name"])
-    new_director.save()
-    print(f"Created new director with ID {new_director.id}")
-    return new_director.id
+    Will return a response message string if the request is valid.
+    Else will return None
+    """
 
-
-def handle_request(message_str: str) -> Optional[d.Message]:
     try:
         message = d.parse_message(message_str)
     except Exception as e:
         print(f"Error parsing message: {e}")
         return None
 
-    if message.command == d.Command.CREATE:
+    if message.command == d.CommandResponse.CREATE:
         print(
             f"Handling CREATE command for {message.table.value} with payload: {message.payload}"
         )
         match message.table:
             case d.Table.DIRECTOR:
-                return handle_create_director(message.payload)
+                return db_director.handle_create_director(message.payload)
+            case d.Table.MOVIE:
+                return db_movie.handle_create_movie(message.payload)
+
+    if message.command == d.CommandResponse.READ:
+        print(
+            f"Handling READ command for {message.table.value} with payload: {message.payload}"
+        )
+        match message.table:
+            case d.Table.DIRECTOR:
+                return db_director.handle_read_director(message.payload)
+            case d.Table.MOVIE:
+                return db_movie.handle_read_movie(message.payload)
+
     return None

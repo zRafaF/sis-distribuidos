@@ -30,7 +30,21 @@ def run_server():
                             print("Connection closed by client.")
                             break
 
-                        db_core.handle_request(message_str)
+                        response_msg_str = db_core.handle_request(message_str)
+
+                        if response_msg_str:
+                            d.send_message(connection, response_msg_str)
+
+                        else:
+                            d.send_message(
+                                connection,
+                                d.create_message(
+                                    d.CommandResponse.ERROR,
+                                    d.Table.NONE,
+                                    payload_dict={"error": "Invalid request"},
+                                ),
+                            )
+
             finally:
                 # Close client socket after handling
                 if connection:

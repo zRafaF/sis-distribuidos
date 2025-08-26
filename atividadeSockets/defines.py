@@ -5,27 +5,25 @@ from typing import Optional, Dict, Any
 
 # Configs
 HOST: str = "127.0.0.1"
-PORT: int = 62101
+PORT: int = 60008
 BUFFER_SIZE: int = 1024
 MSG_SIZE_HEADER: int = 8
 
 
 # Definição do protocolo
-class Command(str, Enum):
+class CommandResponse(str, Enum):
     CREATE = "C"
     READ = "R"
     UPDATE = "U"
     DELETE = "D"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
 
 
 class Table(str, Enum):
     DIRECTOR = "DIR"
     MOVIE = "MOV"
-
-
-class Response(str, Enum):
-    OK = "OK"
-    ERROR = "ERROR"
+    NONE = "NONE"
 
 
 # Estrutura da mensagem
@@ -38,7 +36,7 @@ WILDCARD_ID: int = -1
 # Data Structure
 @dataclass
 class Message:
-    command: Command
+    command: CommandResponse
     table: Table
     record_id: int
     payload: Dict[str, Any]
@@ -69,14 +67,14 @@ def parse_payload(payload_str: str) -> Dict[str, Any]:
 
 
 def create_message(
-    command: Command,
+    command_response: CommandResponse,
     table: Table,
     record_id: int = WILDCARD_ID,
     payload_dict: Optional[Dict[str, Any]] = None,
 ) -> str:
     payload_str = format_payload(payload_dict) if payload_dict else ""
     return MESSAGE_DELIMITER.join(
-        [command.value, table.value, str(record_id), payload_str]
+        [command_response.value, table.value, str(record_id), payload_str]
     )
 
 
@@ -86,9 +84,10 @@ def parse_message(message_str: str) -> Optional[Message]:
         if len(parts) != 4:
             return None
 
-        cmd_str, table_str, record_id_str, payload_str = parts
+        cmd_response_str, table_str, record_id_str, payload_str = parts
 
-        command = Command(cmd_str)
+        command = CommandResponse(cmd_response_str)
+
         table = Table(table_str)
         record_id = int(record_id_str)
         payload = parse_payload(payload_str)

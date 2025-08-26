@@ -1,33 +1,33 @@
 import socket
 
 
-from atividadeSockets import defines as d
+import defines as d
 
 
-def crud_create(data):
-    message = d.create_message(
-        d.Command.CREATE,
-        d.Table.MOVIE,
-        record_id=d.WILDCARD_ID,
-        payload_dict={
-            "title": data[0],
-            "director": data[1],
-            "gender": data[2],
-            "rating": data[3],
-            "duration_min": data[4],
-        },
-    )
+# def crud_create(data, table, payload):
+#     message = d.create_message(
+#         d.Command.CREATE,
+#         table,
+#         record_id=d.WILDCARD_ID,
+#         payload_dict={
+#             "title": data[0],
+#             "director": data[1],
+#             "gender": data[2],
+#             "rating": data[3],
+#             "duration_min": data[4],
+#         },
+#     )
 
-    return message
+#     return message
 
 
-def crud_read(id=d.WILDCARD_ID):
-    # if id == wildcard_id, read all registry
-    message = d.create_message(
-        d.Command.READ, d.Table.MOVIE, record_id=id, payload_dict={}
-    )
+# def crud_read(id=d.WILDCARD_ID):
+#     # if id == wildcard_id, read all registry
+#     message = d.create_message(
+#         d.Command.READ, d.Table.MOVIE, record_id=id, payload_dict={}
+#     )
 
-    return message
+#     return message
 
 
 def accept_only_int_input(disp_str=""):
@@ -78,6 +78,37 @@ def usr_read():
                 continue
 
 
+def usr_update():
+    while True:
+        print("Insira o ID do filme que deseja atualizar, ou 'e' para sair.")
+        id_input = accept_only_int_input()
+        if id_input < 0:
+            continue
+
+        while True:
+            print(
+                "Você pode atualizar o nome do filme (n), nome do diretor (d), \
+                  gênero do filme (g), a avaliação do filme (a), e a duração do filme (l). \
+                  Também pode sair (e)."
+            )
+
+            new_data = {}
+            if id_input == "n":
+                new_data.update()
+            elif id_input == "d":
+                pass
+            elif id_input == "g":
+                pass
+            elif id_input == "a":
+                pass
+            elif id_input == "l":
+                pass
+            elif id_input == "e":
+                break
+            else:
+                continue
+
+
 def usr_interaction(sock):
     print("banco de dados de filmes")
 
@@ -90,18 +121,44 @@ def usr_interaction(sock):
         usr_input = input()
         if usr_input == "c":
             new_data = usr_create()
-            d.send_message(sock, crud_create(new_data))
+            d.send_message(
+                sock,
+                d.create_message(
+                    d.Command.CREATE,
+                    d.Table.MOVIE,
+                    record_id=d.WILDCARD_ID,
+                    payload_dict={
+                        "title": new_data[0],
+                        "director": new_data[1],
+                        "gender": new_data[2],
+                        "rating": new_data[3],
+                        "duration_min": new_data[4],
+                    },
+                ),
+            )
+
+            try:
+                response = d.receive_message(sock)
+                if response:
+                    print("Received response from server:", response)
+            except socket.timeout:
+                print("No response received within 1 second.")
 
         elif usr_input == "r":
-            print(
-                "Insira o ID do registro desejado, ou deixe em branco caso \
-                queira ver todos"
-            )
             id = usr_read()
-            d.send_message(sock, crud_read(id))
+            d.send_message(
+                sock,
+                d.create_message(
+                    d.Command.READ,
+                    d.Table.MOVIE,
+                    record_id=id if id != "a" else d.WILDCARD_ID,
+                    payload_dict={},
+                ),
+            )
 
         elif usr_input == "u":
-            pass
+            id = usr_update()
+
         elif usr_input == "d":
             pass
         elif usr_input == "e":
@@ -112,7 +169,7 @@ def usr_interaction(sock):
 
 def set_conn():
     s = socket.socket()
-    s.connect(d.HOST, d.PORT)
+    s.connect((d.HOST, d.PORT))
 
     return s
 
