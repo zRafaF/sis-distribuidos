@@ -41,9 +41,13 @@ def handle_read_director(payload: dict) -> Optional[str]:
         for director in directors
     ]
 
+    print(f"Read {len(directors_list)} directors from database.")
+
+    payload_dict = {"directors": directors_list}
+
     return d.create_message(
         d.CommandResponse.SUCCESS,
         d.Table.DIRECTOR,
         record_id=d.WILDCARD_ID,
-        payload_dict={"directors": directors_list},
+        payload_dict=payload_dict,
     )

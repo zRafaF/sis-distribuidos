@@ -29,6 +29,9 @@ import defines as d
 
 #     return message
 
+sock = socket.socket()
+sock.connect((d.HOST, d.PORT))
+
 
 def accept_only_int_input(disp_str=""):
     while True:
@@ -85,6 +88,16 @@ def usr_update():
         if id_input < 0:
             continue
 
+        d.send_message(
+            sock,
+            d.create_message(
+                d.CommandResponse.READ,
+                d.Table.MOVIE,
+                record_id=id_input,
+                payload_dict={},
+            ),
+        )
+
         while True:
             print(
                 "Você pode atualizar o nome do filme (n), nome do diretor (d), \
@@ -109,7 +122,60 @@ def usr_update():
                 continue
 
 
-def usr_interaction(sock):
+def get_or_create_director(name: str, sock: socket.socket) -> int:
+    d.send_message(
+        sock,
+        d.create_message(
+            d.CommandResponse.READ,
+            d.Table.DIRECTOR,
+            record_id=d.WILDCARD_ID,
+            payload_dict={},
+        ),
+    )
+    sock.settimeout(1.0)
+
+    try:
+        response = d.receive_message(sock)
+    except socket.timeout:
+        print("No response received within 1 second.")
+        return -1
+
+    parsed_msg = d.parse_message(response)
+    if parsed_msg:
+        directors_list = parsed_msg.payload
+
+        for director in directors_list.get("directors", []):
+            if director.get("name") == name:
+                print("Director found:", director)
+                return director.get("id")
+
+        print("Director not found, creating a new one.")
+        # Se o diretor não for encontrado, cria um novo
+        d.send_message(
+            sock,
+            d.create_message(
+                d.CommandResponse.CREATE,
+                d.Table.DIRECTOR,
+                record_id=d.WILDCARD_ID,
+                payload_dict={"name": name},
+            ),
+        )
+
+        try:
+            response = d.receive_message(sock)
+        except socket.timeout:
+            print("No response received within 1 second.")
+            return -1
+
+        parsed_director_response = d.parse_message(response)
+
+        if parsed_director_response:
+            return parsed_director_response.payload.get("id")
+
+    return -1  # Indica que houve um erro
+
+
+def usr_interaction():
     print("banco de dados de filmes")
 
     while True:
@@ -121,15 +187,22 @@ def usr_interaction(sock):
         usr_input = input()
         if usr_input == "c":
             new_data = usr_create()
+
+            new_director_id = get_or_create_director(new_data[1], sock)
+
+            if new_director_id == -1:
+                print("Erro ao obter ou criar o diretor.")
+                return
+
             d.send_message(
                 sock,
                 d.create_message(
-                    d.Command.CREATE,
+                    d.CommandResponse.CREATE,
                     d.Table.MOVIE,
                     record_id=d.WILDCARD_ID,
                     payload_dict={
                         "title": new_data[0],
-                        "director": new_data[1],
+                        "director_id": new_director_id,
                         "gender": new_data[2],
                         "rating": new_data[3],
                         "duration_min": new_data[4],
@@ -149,7 +222,7 @@ def usr_interaction(sock):
             d.send_message(
                 sock,
                 d.create_message(
-                    d.Command.READ,
+                    d.CommandResponse.READ,
                     d.Table.MOVIE,
                     record_id=id if id != "a" else d.WILDCARD_ID,
                     payload_dict={},
@@ -167,16 +240,8 @@ def usr_interaction(sock):
             continue
 
 
-def set_conn():
-    s = socket.socket()
-    s.connect((d.HOST, d.PORT))
-
-    return s
-
-
 def main():
-    s = set_conn()
-    usr_interaction(s)
+    usr_interaction()
 
 
 if __name__ != "main":

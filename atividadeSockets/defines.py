@@ -1,11 +1,13 @@
+import ast
 from enum import Enum
 from dataclasses import dataclass
 import socket
 from typing import Optional, Dict, Any
+from urllib.parse import quote, unquote
 
 # Configs
 HOST: str = "127.0.0.1"
-PORT: int = 60008
+PORT: int = 60019
 BUFFER_SIZE: int = 1024
 MSG_SIZE_HEADER: int = 8
 
@@ -16,6 +18,7 @@ class CommandResponse(str, Enum):
     READ = "R"
     UPDATE = "U"
     DELETE = "D"
+
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
 
@@ -44,24 +47,47 @@ class Message:
 
 # Helpers
 def format_payload(data: Dict[str, Any]) -> str:
-    """Formats a dictionary into a 'key=value,key=value' string."""
-    if not data:
+    """
+    Formats a dictionary into a 'key=value|key=value' string.
+    Each value is converted to its standard string representation.
+
+    WARNING: This protocol is not robust. Keys or string values containing
+    '=' or '|' will break the parsing.
+    """
+    if not isinstance(data, dict) or not data:
         return ""
-    return PAYLOAD_DELIMITER.join(
-        f"{key}{PAYLOAD_ASSIGNER}{value}" for key, value in data.items()
-    )
+
+    # For a list of dicts, str() will create a string like "[{'id': 1}, {'id': 2}]"
+    parts = [f"{str(key)}{PAYLOAD_ASSIGNER}{str(value)}" for key, value in data.items()]
+    return PAYLOAD_DELIMITER.join(parts)
 
 
 def parse_payload(payload_str: str) -> Dict[str, Any]:
-    """Parses a 'key=value,key=value' string into a dictionary."""
+    """
+    Parses a 'key=value|key=value' string into a dictionary.
+    It safely evaluates values from strings back into Python objects
+    (e.g., lists, dicts, numbers) where possible.
+    """
     if not payload_str:
         return {}
 
+    result: Dict[str, Any] = {}
     try:
-        return dict(
-            pair.split(PAYLOAD_ASSIGNER, 1)
-            for pair in payload_str.split(PAYLOAD_DELIMITER)
-        )
+        for pair in payload_str.split(PAYLOAD_DELIMITER):
+            if PAYLOAD_ASSIGNER not in pair:
+                continue
+
+            key, value_str = pair.split(PAYLOAD_ASSIGNER, 1)
+
+            try:
+                # ast.literal_eval safely parses string representations of
+                # Python data structures like lists, dicts, numbers, and booleans.
+                result[key] = ast.literal_eval(value_str)
+            except (ValueError, SyntaxError):
+                # If the string is not a valid literal (e.g., a simple
+                # message like "SUCCESS"), keep it as a string.
+                result[key] = value_str
+        return result
     except ValueError:
         return {}
 
