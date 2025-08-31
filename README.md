@@ -1,6 +1,6 @@
-Com certeza. Realizei a mesclagem, combinando a estrutura clara e os exemplos do seu README atual com a documentação técnica detalhada (esquema do banco, fluxogramas, etc.) que atende aos requisitos do professor. O resultado é um documento único e completo.
-
------
+**Grupo:**
+* Rafael Farias Meneses / 2263831
+* Fábio Bays de Araujo / 2370441
 
 # Sistema de Gerenciamento de Filmes via Sockets
 
