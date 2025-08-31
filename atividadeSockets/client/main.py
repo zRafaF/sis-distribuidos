@@ -23,8 +23,11 @@ class Movie:
 
     def print_self(self):
         print(
-            f"Id dNome do filme: {self.title}\nNome do diretor: {self.director_name}\n\
-            Gênero do filme: {self.gender}\nDuração do filme em minutos: {self.duration_min}\n \
+            f"ID do filme no banco de dados: {self.movie_db_id}\n \
+        Nome do filme: {self.title}\n \
+        Nome do diretor: {self.director_name}\n \
+        Gênero do filme: {self.gender}\n \
+        Duração do filme em minutos: {self.duration_min}\n \
         Nota do filme (0 a 5): {self.rating}"
         )
 
@@ -87,18 +90,28 @@ def handle_update():
         if id_input < 0:
             continue
 
-        movie = get_movie_data()
-        if movie == None:
-            continue
+        movies = get_movie_data(id_input)
 
+        if len(movies) > 1:
+            print("Mais de um filme retornado, algo deu errado.")
+            return -1
+
+        movie = movies[0] if movies else None
+
+        if movie is None:
+            print("Filme não encontrado.")
+            return -1
         else:
             updated_movie = Movie(
-                movie.director,
+                movie.director_db_id,
+                movie.movie_db_id,
+                movie.director_name,
                 movie.title,
                 movie.rating,
                 movie.gender,
                 movie.duration_min,
             )
+
             while True:
                 print(
                     "Você pode atualizar o nome do filme (n), nome do diretor (d), \
@@ -106,30 +119,34 @@ def handle_update():
                       Também pode sair (e)."
                 )
 
-                if id_input == "n":
+                usr_input = input()
+
+                if usr_input == "n":
                     print("Insira o novo nome do filme")
                     updated_movie.title = input()
                     continue
-                elif id_input == "d":
+                elif usr_input == "d":
                     print("Insira o nome do diretor do filme")
                     updated_movie.director = input()
-                    continue
-                elif id_input == "g":
+                    if get_or_create_director(updated_movie.director, sock) != -1:
+                        continue
+                    print("LOG: Erro ao atualizar nome do diretor")
+                elif usr_input == "g":
                     print("Insira o novo gênero do filme")
                     updated_movie.gender = input()
                     continue
-                elif id_input == "a":
+                elif usr_input == "a":
                     print("Insira a nova avaliação do filme")
                     new_rating = -1
                     while new_rating > 5 or new_rating < 0:
                         new_rating = accept_only_int_input()
                     updated_movie.rating = new_rating
                     continue
-                elif id_input == "l":
+                elif usr_input == "l":
                     print("Insira a nova duração do filme")
                     updated_movie.duration_min = accept_only_int_input()
                     continue
-                elif id_input == "e":
+                elif usr_input == "e":
                     break
                 else:
                     continue
@@ -143,8 +160,8 @@ def update_movie(new_data: Movie):
         d.create_message(
             d.CommandResponse.UPDATE,
             d.Table.DIRECTOR,
-            record_id=new_data.director_id,
-            payload_dict={"director": new_data.director},
+            record_id=new_data.director_db_id,
+            payload_dict={"name": new_data.director_name},
         ),
     )
 
@@ -166,10 +183,10 @@ def update_movie(new_data: Movie):
         d.create_message(
             d.CommandResponse.UPDATE,
             d.Table.MOVIE,
-            record_id=new_data.movie_id,
+            record_id=new_data.movie_db_id,
             payload_dict={
-                "title": new_data.movie_title,
-                "director_id": new_data.director_id,
+                "title": new_data.title,
+                "director_id": new_data.director_db_id,
                 "gender": new_data.gender,
                 "rating": new_data.rating,
                 "duration_min": new_data.duration_min,
@@ -368,7 +385,7 @@ def handle_delete():
         print("LOG: erro ao deletar o registro")
         return -1
 
-    else:
+    if parsed_msg.command == d.CommandResponse.SUCCESS:
         print("Filme deletado com sucesso do banco de dados")
         return 0
 
@@ -413,6 +430,7 @@ def usr_interaction():
             for movie in movies:
                 print("-_-_" * 20)
                 movie.print_self()
+                print()
         elif usr_input == "l":
             ler_todos_diretores()
         elif usr_input == "u":

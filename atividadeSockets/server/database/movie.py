@@ -74,3 +74,57 @@ def handle_read_movie(record_id: int) -> Optional[str]:
         record_id=d.WILDCARD_ID,
         payload_dict=payload_dict,
     )
+
+
+def handle_delete_movie(record_id: int) -> Optional[str]:
+    print(f"Deleting movie with ID: {record_id}")
+    movie = schema.Movies.get_by_id(record_id)
+    if not movie:
+        return d.create_message(
+            d.CommandResponse.ERROR,
+            d.Table.MOVIE,
+            record_id=record_id,
+            payload_dict={"error": "Movie not found"},
+        )
+
+    movie.delete_instance()
+    print(f"Deleted movie with ID: {record_id}")
+
+    return d.create_message(
+        d.CommandResponse.SUCCESS,
+        d.Table.MOVIE,
+        record_id=record_id,
+        payload_dict={"id": record_id},
+    )
+
+
+def handle_update_movie(record_id: int, payload: dict) -> Optional[str]:
+    movie = schema.Movies.get_by_id(record_id)
+    if not movie:
+        return d.create_message(
+            d.CommandResponse.ERROR,
+            d.Table.MOVIE,
+            record_id=record_id,
+            payload_dict={"error": "Movie not found"},
+        )
+
+    for key, value in payload.items():
+        if hasattr(movie, key):
+            setattr(movie, key, value)
+
+    movie.save()
+    print(f"Updated movie with ID: {record_id}")
+
+    return d.create_message(
+        d.CommandResponse.SUCCESS,
+        d.Table.MOVIE,
+        record_id=record_id,
+        payload_dict={
+            "id": movie.id,
+            "title": movie.title,
+            "director_id": movie.director_id.id,
+            "rating": movie.rating,
+            "duration_min": movie.duration_min,
+            "gender": movie.gender,
+        },
+    )

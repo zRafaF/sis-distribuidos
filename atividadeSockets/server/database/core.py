@@ -56,4 +56,26 @@ def handle_request(message_str: str) -> Optional[str]:
             case d.Table.MOVIE:
                 return db_movie.handle_read_movie(message.record_id)
 
+    if message.command == d.CommandResponse.UPDATE:
+        print(
+            f"Handling UPDATE command for {message.table.value} with payload: {message.payload}"
+        )
+        match message.table:
+            case d.Table.DIRECTOR:
+                return db_director.handle_update_director(
+                    message.record_id, message.payload
+                )
+            case d.Table.MOVIE:
+                return db_movie.handle_update_movie(message.record_id, message.payload)
+
+    if message.command == d.CommandResponse.DELETE:
+        print(
+            f"Handling DELETE command for {message.table.value} with payload: {message.payload}"
+        )
+        match message.table:
+            case d.Table.DIRECTOR:
+                return db_director.handle_delete_director(message.record_id)
+            case d.Table.MOVIE:
+                return db_movie.handle_delete_movie(message.record_id)
+
     return None

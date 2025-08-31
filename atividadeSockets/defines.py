@@ -7,7 +7,7 @@ from urllib.parse import quote, unquote
 
 # Configs
 HOST: str = "127.0.0.1"
-PORT: int = 60013
+PORT: int = 60016
 BUFFER_SIZE: int = 1024
 MSG_SIZE_HEADER: int = 8
 

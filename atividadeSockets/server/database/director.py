@@ -52,3 +52,52 @@ def handle_read_director(record_id: int) -> Optional[str]:
         record_id=d.WILDCARD_ID,
         payload_dict=payload_dict,
     )
+
+
+def handle_delete_director(record_id: int) -> Optional[str]:
+    print(f"Deleting director with ID: {record_id}")
+    director = schema.Directors.get_by_id(record_id)
+    if not director:
+        return d.create_message(
+            d.CommandResponse.ERROR,
+            d.Table.DIRECTOR,
+            record_id=record_id,
+            payload_dict={"error": "Director not found"},
+        )
+
+    director.delete_instance()
+    print(f"Deleted director with ID: {record_id}")
+
+    return d.create_message(
+        d.CommandResponse.SUCCESS,
+        d.Table.DIRECTOR,
+        record_id=record_id,
+        payload_dict={"id": record_id},
+    )
+
+
+def handle_update_director(record_id: int, payload: dict) -> Optional[str]:
+    if not payload.get("name"):
+        return None
+
+    director = schema.Directors.get_by_id(record_id)
+    if not director:
+        return d.create_message(
+            d.CommandResponse.ERROR,
+            d.Table.DIRECTOR,
+            record_id=record_id,
+            payload_dict={"error": "Director not found"},
+        )
+
+    director.name = payload["name"]
+    director.save()
+
+    return d.create_message(
+        d.CommandResponse.SUCCESS,
+        d.Table.DIRECTOR,
+        record_id=record_id,
+        payload_dict={
+            "id": director.id,
+            "name": director.name,
+        },
+    )
