@@ -26,8 +26,9 @@ def handle_create_director(payload: dict) -> Optional[str]:
     )
 
 
-def handle_read_director(payload: dict) -> Optional[str]:
-    director_id = payload.get("id", d.WILDCARD_ID)
+def handle_read_director(record_id: int) -> Optional[str]:
+    director_id = record_id
+    print(f"Reading director with ID: {director_id}")
     if director_id == d.WILDCARD_ID:
         directors = schema.Directors.select()
     else:

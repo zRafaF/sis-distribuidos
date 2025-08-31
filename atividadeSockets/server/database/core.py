@@ -11,7 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 import defines as d
 import schema
 
-db = peewee.SqliteDatabase(os.path.join(current_dir, "database.db"))
+db = peewee.SqliteDatabase(os.path.join(current_dir, "database1.db"))
 
 
 def initialize_db() -> None:
@@ -31,6 +31,7 @@ def handle_request(message_str: str) -> Optional[str]:
 
     try:
         message = d.parse_message(message_str)
+        print(f"Parsed message: {message}")
     except Exception as e:
         print(f"Error parsing message: {e}")
         return None
@@ -51,8 +52,8 @@ def handle_request(message_str: str) -> Optional[str]:
         )
         match message.table:
             case d.Table.DIRECTOR:
-                return db_director.handle_read_director(message.payload)
+                return db_director.handle_read_director(message.record_id)
             case d.Table.MOVIE:
-                return db_movie.handle_read_movie(message.payload)
+                return db_movie.handle_read_movie(message.record_id)
 
     return None

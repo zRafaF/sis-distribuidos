@@ -8,21 +8,26 @@ sock = socket.socket()
 sock.connect((d.HOST, d.PORT))
 sock.settimeout(1.0)
 
-class Movie(director_id, movie_id,
-            director_name, title,
-            rating, gender, duration_min):
-    self.director_db_id = director_id
-    self.movie_db_id = movie_id 
-    self.director_name = director_name
-    self.title = title
-    self.rating = rating
-    self.gender = gender
-    self.duration_min = duration_min
+
+class Movie:
+    def __init__(
+        self, director_id, movie_id, director_name, title, rating, gender, duration_min
+    ):
+        self.director_db_id = director_id
+        self.movie_db_id = movie_id
+        self.director_name = director_name
+        self.title = title
+        self.rating = rating
+        self.gender = gender
+        self.duration_min = duration_min
 
     def print_self(self):
-        print(f"Nome do filme: {self.title}\nNome do diretor: {self.director_name}\n \
-        Gênero do filme: {self.gender}\nDuração do filme em minutos: {duration_min}\n \
-        Nota do filme (0 a 5): {self.rating}")
+        print(
+            f"Id dNome do filme: {self.title}\nNome do diretor: {self.director_name}\n\
+            Gênero do filme: {self.gender}\nDuração do filme em minutos: {self.duration_min}\n \
+        Nota do filme (0 a 5): {self.rating}"
+        )
+
 
 def accept_only_int_input(disp_str=""):
     while True:
@@ -68,8 +73,11 @@ def usr_interaction_read():
         if usr_input != "a":
             try:
                 id = int(usr_input)
+                return id
             except ValueError:
                 continue
+        else:
+            return d.WILDCARD_ID
 
 
 def handle_update():
@@ -79,14 +87,18 @@ def handle_update():
         if id_input < 0:
             continue
 
-        movie = get_movie_data()  
+        movie = get_movie_data()
         if movie == None:
             continue
 
         else:
-            updated_movie = Movie(movie.director, movie.title,
-                                movie.rating, movie.gender,
-                                movie.duration_min)
+            updated_movie = Movie(
+                movie.director,
+                movie.title,
+                movie.rating,
+                movie.gender,
+                movie.duration_min,
+            )
             while True:
                 print(
                     "Você pode atualizar o nome do filme (n), nome do diretor (d), \
@@ -96,15 +108,15 @@ def handle_update():
 
                 if id_input == "n":
                     print("Insira o novo nome do filme")
-                    updated_movie.title = input() 
+                    updated_movie.title = input()
                     continue
                 elif id_input == "d":
                     print("Insira o nome do diretor do filme")
-                    updated_movie.director = input() 
+                    updated_movie.director = input()
                     continue
                 elif id_input == "g":
                     print("Insira o novo gênero do filme")
-                    updated_movie.gender = input() 
+                    updated_movie.gender = input()
                     continue
                 elif id_input == "a":
                     print("Insira a nova avaliação do filme")
@@ -124,32 +136,31 @@ def handle_update():
 
             update_movie(updated_movie)
 
-def update_movie(new_data : Movie):
+
+def update_movie(new_data: Movie):
     d.send_message(
         sock,
         d.create_message(
             d.CommandResponse.UPDATE,
             d.Table.DIRECTOR,
             record_id=new_data.director_id,
-            payload_dict={
-                'director' : new_data.director
-            }
-        )
+            payload_dict={"director": new_data.director},
+        ),
     )
 
     # Checar se deu certo
     server_msg = d.receive_message(sock)
     if server_msg == None:
         return -1
-    
+
     parsed_msg = d.parse_message(server_msg)
     if parsed_msg == None:
         return -1
 
     if parsed_msg.command == d.CommandResponse.ERROR:
-        print('LOG: Falha na atualização do diretor')
+        print("LOG: Falha na atualização do diretor")
         return -1
-    
+
     d.send_message(
         sock,
         d.create_message(
@@ -161,25 +172,26 @@ def update_movie(new_data : Movie):
                 "director_id": new_data.director_id,
                 "gender": new_data.gender,
                 "rating": new_data.rating,
-                "duration_min": new_data.duration_min
-            }
-        )
+                "duration_min": new_data.duration_min,
+            },
+        ),
     )
 
     # Checar se deu certo
     server_msg = d.receive_message(sock)
     if server_msg == None:
         return -1
-    
+
     parsed_msg = d.parse_message(server_msg)
     if parsed_msg == None:
         return -1
 
     if parsed_msg.command == d.CommandResponse.ERROR:
-        print('LOG: Falha na atualização do filme')
+        print("LOG: Falha na atualização do filme")
         return -1
 
     return 0
+
 
 def get_or_create_director(name: str, sock: socket.socket) -> int:
     d.send_message(
@@ -232,6 +244,7 @@ def get_or_create_director(name: str, sock: socket.socket) -> int:
 
     return -1  # Indica que houve um erro
 
+
 def handle_create():
     new_data = usr_interaction_create()
 
@@ -264,32 +277,15 @@ def handle_create():
     except socket.timeout:
         print("No response received within 1 second.")
 
-def get_server_msg_payload():
-    server_msg = d.receive_message(sock)
 
-    if server_msg == None:
-        return -1
-
-    parsed_msg = d.parse_message(server_msg)
-
-    if parsed_msg == None:
-        return -1
-
-    payload = d.parse_payload(parsed_msg.payload)
-
-    if payload == {}:
-        return -1
-
-    return payload
-    
 def get_movie_data(id):
-    # For now, the code only reads one register of the database
-
     # Get the movie's data
+    d.send_message(
+        sock,
         d.create_message(
             d.CommandResponse.READ,
             d.Table.MOVIE,
-            record_id=id if id != "a" else d.WILDCARD_ID,
+            record_id=id,
             payload_dict={},
         ),
     )
@@ -300,46 +296,54 @@ def get_movie_data(id):
         return -1
 
     parsed_msg = d.parse_message(server_msg)
-    
-    if parsed_msg == None
+
+    if parsed_msg == None:
         return -1
 
-    if parsed_msg.command == d.ERROR:
-        print('Esse filme não está presente no banco de dados.')
+    if parsed_msg.command == d.CommandResponse.ERROR:
+        print("Esse filme não está presente no banco de dados.")
         return None
-    
-    payload = d.parse_payload(parsed_msg.payload()
 
-    if payload == {}:
+    movies_list = parsed_msg.payload
+
+    if movies_list == {}:
         return -1
 
-    # Get the director's name via his id
-    d.send_message(
-        sock,
-        d.create_message(
-            d.CommandResponse.READ,
-            d.Table.DIRECTOR,
-            record_id=payload.get('director_id'),
-            payload_dict={}
-        ),
-    )
+    movies: list[Movie] = []
 
-    payload_two = get_server_msg_payload()
+    for movie in movies_list.get("movies", []):
+        d.send_message(
+            sock,
+            d.create_message(
+                d.CommandResponse.READ,
+                d.Table.DIRECTOR,
+                record_id=movie.get("director_id"),
+                payload_dict={},
+            ),
+        )
 
-    movie = Movie(
-                payload.get('director_id'),
-                id, 
-                payload_two.get('director'), 
-                payload.get('title'),
-                payload.get('rating'),
-                payload.get('gender'),
-                payload.get('duration_min')
+        director_msg = d.receive_message(sock)
+        directors_list = d.parse_message(director_msg).payload.get("directors", [])
+
+        director = directors_list[0]
+
+        movies.append(
+            Movie(
+                director_id=movie.get("director_id"),
+                movie_id=movie.get("id"),
+                director_name=director.get("name") if director else "Unknown",
+                title=movie.get("title"),
+                rating=movie.get("rating"),
+                gender=movie.get("gender"),
+                duration_min=movie.get("duration_min"),
             )
-    
-    return movie
+        )
+
+    return movies
+
 
 def handle_delete():
-    print('Insira o ID do filme que deseja deletar')
+    print("Insira o ID do filme que deseja deletar")
     id = -1
     while id < 0:
         id = accept_only_int_input()
@@ -347,11 +351,8 @@ def handle_delete():
     d.send_message(
         sock,
         d.create_message(
-            d.CommandResponse.DELETE,
-            d.Table.MOVIE,
-            record_id=id
-            payload_dict={}
-        )
+            d.CommandResponse.DELETE, d.Table.MOVIE, record_id=id, payload_dict={}
+        ),
     )
 
     # Checar se deu certo
@@ -364,12 +365,32 @@ def handle_delete():
         return -1
 
     if parsed_msg.command == d.CommandResponse.ERROR:
-        print('LOG: erro ao deletar o registro')
+        print("LOG: erro ao deletar o registro")
         return -1
 
     else:
-        print('Filme deletado com sucesso do banco de dados')
+        print("Filme deletado com sucesso do banco de dados")
         return 0
+
+
+def ler_todos_diretores():
+    d.send_message(
+        sock,
+        d.create_message(
+            d.CommandResponse.READ, d.Table.DIRECTOR, d.WILDCARD_ID, payload_dict={}
+        ),
+    )
+
+    msg = d.receive_message(sock)
+
+    parsed_msg = d.parse_message(msg)
+
+    parsed_payload = d.parse_payload(parsed_msg.payload)
+
+    print("diretores:")
+    for values in parsed_payload.values:
+        print(values)
+
 
 def usr_interaction():
     print("banco de dados de filmes")
@@ -385,16 +406,21 @@ def usr_interaction():
             handle_create()
         elif usr_input == "r":
             id = usr_interaction_read()
-            movie = get_movie_data(id)
-            if movie == None:
+            movies = get_movie_data(id)
+            if movies == None:
                 continue
-            movie.print_self() 
+            print("\n" * 5)
+            for movie in movies:
+                print("-_-_" * 20)
+                movie.print_self()
+        elif usr_input == "l":
+            ler_todos_diretores()
         elif usr_input == "u":
             handle_update()
         elif usr_input == "d":
             handle_delete()
         elif usr_input == "e":
-            sock.shutdown(SHUT_RDWR)
+            sock.shutdown(socket.SHUT_RDWR)
             return 0
         else:  # input not in possible inputs
             continue
@@ -403,6 +429,7 @@ def usr_interaction():
 def main():
     usr_interaction()
     return 0
+
 
 if __name__ != "main":
     main()

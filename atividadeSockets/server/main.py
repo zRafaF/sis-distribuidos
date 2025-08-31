@@ -29,10 +29,18 @@ def run_server():
                         if message_str is None:
                             print("Connection closed by client.")
                             break
-
-                        response_msg_str = db_core.handle_request(message_str)
+                        try:
+                            response_msg_str = db_core.handle_request(message_str)
+                        except Exception as e:
+                            print(f"Error handling request: {e}")
+                            response_msg_str = d.create_message(
+                                d.CommandResponse.ERROR,
+                                d.Table.NONE,
+                                payload_dict={"error": str(e)},
+                            )
 
                         if response_msg_str:
+                            print(f"msg string: {response_msg_str}")
                             d.send_message(connection, response_msg_str)
 
                         else:
