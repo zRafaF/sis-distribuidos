@@ -89,7 +89,9 @@ def handle_update_director(record_id: int, payload: dict) -> Optional[str]:
             payload_dict={"error": "Director not found"},
         )
 
-    director.name = payload["name"]
+    for key, value in payload.items():
+        if hasattr(director, key):
+            setattr(director, key, value)
     director.save()
 
     return d.create_message(

@@ -23,12 +23,12 @@ class Movie:
 
     def print_self(self):
         print(
-            f"ID do filme no banco de dados: {self.movie_db_id}\n \
-        Nome do filme: {self.title}\n \
-        Nome do diretor: {self.director_name}\n \
-        Gênero do filme: {self.gender}\n \
-        Duração do filme em minutos: {self.duration_min}\n \
-        Nota do filme (0 a 5): {self.rating}"
+            f"ID do filme no banco de dados: {self.movie_db_id}\n"
+            f"Nome do filme: {self.title}\n"
+            f"Nome do diretor: {self.director_name}\n"
+            f"Gênero do filme: {self.gender}\n"
+            f"Duração do filme em minutos: {self.duration_min}\n"
+            f"Nota do filme (0 a 5): {self.rating}"
         )
 
 
@@ -68,8 +68,8 @@ def usr_interaction_create():
 def usr_interaction_read():
     while True:
         print(
-            "Insira o ID do filme que deseja visualizar, ou 'a' \
-                para visualizar todos."
+            "Insira o ID do filme que deseja visualizar, ou 'a'"
+            "para visualizar todos."
         )
 
         usr_input = input()
@@ -84,9 +84,18 @@ def usr_interaction_read():
 
 
 def handle_update():
+    update = False
     while True:
         print("Insira o ID do filme que deseja atualizar, ou 'e' para sair.")
-        id_input = accept_only_int_input()
+        id_input = input()
+        if id_input == "e":
+            break
+
+        try:
+            id_input = int(id_input)
+        except ValueError:
+            continue
+
         if id_input < 0:
             continue
 
@@ -114,44 +123,50 @@ def handle_update():
 
             while True:
                 print(
-                    "Você pode atualizar o nome do filme (n), nome do diretor (d), \
-                      gênero do filme (g), a avaliação do filme (a), e a duração do filme (l). \
-                      Também pode sair (e)."
+                    "Você pode atualizar:\nNome do filme (n)\nNome do diretor (d)\nGênero do filme (g)\nAvaliação do filme (a)\nDuração do filme (l)."
                 )
+
+                if update:
+                    print("Digite 'e' para sair e salvar as alterações.")
+                else:
+                    print("Digite 'e' para sair.")
 
                 usr_input = input()
 
                 if usr_input == "n":
                     print("Insira o novo nome do filme")
                     updated_movie.title = input()
-                    continue
+                    update = True
                 elif usr_input == "d":
                     print("Insira o nome do diretor do filme")
-                    updated_movie.director = input()
-                    if get_or_create_director(updated_movie.director, sock) != -1:
-                        continue
+                    updated_movie.director_name = input()
+                    update = True
                     print("LOG: Erro ao atualizar nome do diretor")
                 elif usr_input == "g":
                     print("Insira o novo gênero do filme")
                     updated_movie.gender = input()
-                    continue
+                    update = True
                 elif usr_input == "a":
                     print("Insira a nova avaliação do filme")
                     new_rating = -1
                     while new_rating > 5 or new_rating < 0:
                         new_rating = accept_only_int_input()
                     updated_movie.rating = new_rating
-                    continue
+                    update = True
+
                 elif usr_input == "l":
                     print("Insira a nova duração do filme")
                     updated_movie.duration_min = accept_only_int_input()
-                    continue
+                    update = True
                 elif usr_input == "e":
                     break
                 else:
                     continue
 
-            update_movie(updated_movie)
+            if update == True:
+                update_movie(updated_movie)
+
+            break
 
 
 def update_movie(new_data: Movie):
@@ -161,7 +176,10 @@ def update_movie(new_data: Movie):
             d.CommandResponse.UPDATE,
             d.Table.DIRECTOR,
             record_id=new_data.director_db_id,
-            payload_dict={"name": new_data.director_name},
+            payload_dict={
+                "name": new_data.director_name,
+                "id": new_data.director_db_id,
+            },
         ),
     )
 
@@ -414,8 +432,8 @@ def usr_interaction():
 
     while True:
         print(
-            "Voce pode inserir (c), ler (r), atualizar (u), deletar registros (d) \
-            ou sair (e)"
+            "Voce pode inserir (c), ler (r), atualizar (u), deletar registros (d)"
+            " ou sair (e)"
         )
 
         usr_input = input()
@@ -426,7 +444,6 @@ def usr_interaction():
             movies = get_movie_data(id)
             if movies == None:
                 continue
-            print("\n" * 5)
             for movie in movies:
                 print("-_-_" * 20)
                 movie.print_self()
