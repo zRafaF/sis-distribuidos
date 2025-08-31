@@ -11,7 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 import defines as d
 import schema
 
-db = peewee.SqliteDatabase(os.path.join(current_dir, "database1.db"))
+db = peewee.SqliteDatabase(os.path.join(current_dir, "database.db"))
 
 
 def initialize_db() -> None:

@@ -326,6 +326,7 @@ def get_movie_data(id):
     )
 
     server_msg = d.receive_message(sock)
+    # print("Received message from server:", server_msg)
 
     if server_msg == None:
         return -1
@@ -408,27 +409,8 @@ def handle_delete():
         return 0
 
 
-def ler_todos_diretores():
-    d.send_message(
-        sock,
-        d.create_message(
-            d.CommandResponse.READ, d.Table.DIRECTOR, d.WILDCARD_ID, payload_dict={}
-        ),
-    )
-
-    msg = d.receive_message(sock)
-
-    parsed_msg = d.parse_message(msg)
-
-    parsed_payload = d.parse_payload(parsed_msg.payload)
-
-    print("diretores:")
-    for values in parsed_payload.values:
-        print(values)
-
-
 def usr_interaction():
-    print("banco de dados de filmes")
+    print("Banco de Dados de Filmes")
 
     while True:
         print(
@@ -446,10 +428,9 @@ def usr_interaction():
                 continue
             for movie in movies:
                 print("-_-_" * 20)
+                print()
                 movie.print_self()
                 print()
-        elif usr_input == "l":
-            ler_todos_diretores()
         elif usr_input == "u":
             handle_update()
         elif usr_input == "d":
@@ -466,5 +447,5 @@ def main():
     return 0
 
 
-if __name__ != "main":
+if __name__ == "__main__":
     main()
