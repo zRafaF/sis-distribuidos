@@ -1,3 +1,7 @@
+Com certeza. Realizei a mesclagem, combinando a estrutura clara e os exemplos do seu README atual com a documentação técnica detalhada (esquema do banco, fluxogramas, etc.) que atende aos requisitos do professor. O resultado é um documento único e completo.
+
+-----
+
 # Sistema de Gerenciamento de Filmes via Sockets
 
 Este projeto implementa um sistema cliente-servidor para gerenciar um banco de dados de filmes e diretores. A comunicação entre o cliente e o servidor é realizada através de um protocolo de texto simples sobre TCP/IP.
@@ -43,7 +47,7 @@ cd atividadesSockets
 ```
 
 1.  **Inicie o Servidor:**
-    O servidor irá inicializar o banco de dados `database.db` (se não existir) e começará a escutar por conexões.
+    O servidor irá inicializar o banco de dados `database1.db` (se não existir) e começará a escutar por conexões.
 
     ```bash
     make server
@@ -56,86 +60,225 @@ cd atividadesSockets
     make client
     ```
 
-## Protocolo de Comunicação
+-----
 
-A comunicação é baseada em mensagens de texto com uma estrutura bem definida, separada por delimitadores.
+## Documentação Técnica (Conforme Requisitos)
 
-### Transporte e Enquadramento de Mensagem
+Esta seção detalha a arquitetura do banco de dados e o protocolo de comunicação, conforme solicitado.
 
-Para garantir que as mensagens sejam recebidas de forma completa e sem corrupção, o protocolo utiliza um cabeçalho de tamanho fixo. Antes de qualquer mensagem ser enviada, seu tamanho total em bytes é calculado. Esse tamanho é então enviado como um cabeçalho de 8 bytes (`MSG_SIZE_HEADER`). O receptor primeiro lê esses 8 bytes para determinar o tamanho da mensagem que está por vir e, em seguida, lê exatamente esse número de bytes para obter a mensagem completa.
+### 1\. Estrutura do Banco de Dados
 
-A estrutura enviada pelo socket é: `[CABEÇALHO DE 8 BYTES COM O TAMANHO][MENSAGEM COMPLETA]`
+O sistema utiliza **SQLite** como banco de dados, com a interação sendo gerenciada pela ORM **Peewee**. A função `initialize_db()` no arquivo `server/database/core.py` é responsável por criar as tabelas no momento da inicialização do servidor, caso elas não existam.
 
-### Estrutura Geral da Mensagem
+A estrutura é composta por duas tabelas: `Directors` e `Movies`.
 
-Cada mensagem de texto (enviada após o cabeçalho de tamanho) é formatada da seguinte maneira:
+#### Tabela: `Directors`
+
+Armazena os nomes dos diretores.
+
+| Coluna | Tipo de Dado | Descrição |
+| :--- | :--- | :--- |
+| `id` | `INTEGER` | Chave Primária, autoincremento. |
+| `name` | `VARCHAR` | Nome do diretor. |
+| `created_at`| `DATETIME` | Data e hora da criação do registro. |
+| `updated_at`| `DATETIME` | Data e hora da última atualização. |
+
+#### Tabela: `Movies`
+
+Armazena as informações dos filmes, com uma referência à tabela `Directors`.
+
+| Coluna | Tipo de Dado | Descrição |
+| :--- | :--- | :--- |
+| `id` | `INTEGER` | Chave Primária, autoincremento. |
+| `title` | `VARCHAR` | Título do filme. |
+| `director_id`| `INTEGER` | Chave Estrangeira que referencia `Directors.id`. |
+| `rating` | `REAL` | Avaliação do filme (ex: 4.5). |
+| `duration_min`| `INTEGER` | Duração do filme em minutos. |
+| `gender` | `VARCHAR` | Gênero do filme (ex: Ação, Comédia). |
+| `created_at`| `DATETIME` | Data e hora da criação do registro. |
+| `updated_at`| `DATETIME` | Data e hora da última atualização. |
+
+-----
+
+### 2\. Estrutura e Fluxo dos Pacotes
+
+A comunicação é baseada em "pacotes" que consistem em um cabeçalho de tamanho fixo seguido por uma mensagem de tamanho variável.
+
+#### Enquadramento do Pacote (Framing)
+
+Cada pacote enviado pela rede possui a seguinte estrutura de bytes:
+
+| Parte | Tamanho (Bytes) | Descrição |
+| :--- | :--- | :--- |
+| **Cabeçalho** | 8 bytes | Um inteiro (big-endian) que representa o tamanho da mensagem que se segue. |
+| **Mensagem** | Variável | A string da mensagem, codificada em UTF-8. |
+
+#### Formato da Mensagem
+
+A mensagem em si é uma string com campos delimitados por `@`, seguindo a estrutura geral já descrita:
 
 `COMANDO@TABELA@ID_REGISTRO@PAYLOAD`
 
-  - **`COMANDO`**: Representa a operação (para o cliente) ou o status da resposta (para o servidor).
-      - **Comandos do Cliente**: `C` (Create), `R` (Read), `U` (Update), `D` (Delete).
-      - **Respostas do Servidor**: `SUCCESS`, `ERROR`.
-  - **`TABELA`**: Um código de 3 letras que identifica a tabela do banco de dados.
-      - `DIR`: Tabela de Diretores (`Directors`)
-      - `MOV`: Tabela de Filmes (`Movies`)
-  - **`ID_REGISTRO`**: O ID numérico do registro a ser afetado. Para operações que não visam um registro específico (como criar um novo ou listar todos), utiliza-se o valor `WILDCARD_ID`, que é **-1**.
-  - **`PAYLOAD`**: Uma string contendo os dados da requisição ou resposta, com o formato `chave1=valor1|chave2=valor2`.
+-----
 
-### Estrutura do Payload
+### Detalhamento por Operação
 
-O payload é uma série de pares chave-valor:
+A seguir, o detalhamento do pacote e o fluxo para cada método principal.
 
-  - Pares são separados pelo caractere pipe (`|`).
-  - A chave e o valor dentro de um par são separados pelo sinal de igual (`=`).
+#### Operação: Criar (`CREATE`)
 
-### Codificação de Tipos Complexos (Arrays e Dicionários)
+  - **Descrição:** Cria um novo registro (Filme ou Diretor).
 
-O payload pode transportar não apenas valores simples, mas também estruturas de dados complexas como listas (arrays) e dicionários.
+  - **Requisição (Cliente -\> Servidor):**
 
-  - **Envio**: Ao criar uma mensagem, qualquer valor que seja uma lista ou dicionário é convertido para sua representação em formato de string. Por exemplo, uma lista de filmes é formatada como uma string que se parece com uma lista literal do Python.
-  - **Recebimento**: O receptor utiliza a função `ast.literal_eval` para analisar a string e reconstruir a estrutura de dados original (lista, dicionário, etc.) de forma segura.
+      - Formato: `C@<tabela>@-1@<payload_com_dados>`
+      - Exemplo (Filme): `C@MOV@-1@title=Pulp Fiction|director_id=1|rating=5|duration_min=154|gender=Crime`
 
-Isso é comumente usado em respostas de leitura (`READ`) que retornam múltiplos registros.
+  - **Resposta de Sucesso (Servidor -\> Cliente):**
 
-### Respostas do Servidor
+      - Formato: `SUCCESS@<tabela>@<novo_id>@<payload_com_dados_e_id>`
+      - Exemplo (Filme): `SUCCESS@MOV@25@id=25|title=Pulp Fiction|director_id=1|...`
 
-Para cada requisição do cliente, o servidor envia uma resposta. A estrutura da resposta segue o mesmo formato da mensagem, mas o campo `COMANDO` indica o resultado da operação.
+  - **Resposta de Erro:**
 
-#### Respostas de Sucesso
+      - Formato: `ERROR@<tabela>@-1@error=<descrição_do_erro>`
 
-Ocorrem quando a operação solicitada foi concluída com êxito. O comando da mensagem será `SUCCESS`.
+  - **Fluxograma (Criar Filme, lógica do cliente):**
 
-  - **Ao Criar (`CREATE`):** A resposta contém no payload os dados completos do novo registro, incluindo o ID gerado pelo banco de dados.
-  - **Ao Ler (`READ`):** O payload da resposta contém o registro solicitado ou uma lista de registros.
-  - **Ao Atualizar (`UPDATE`):** A resposta contém os dados atualizados do registro para confirmação.
-  - **Ao Deletar (`DELETE`):** A resposta confirma a remoção, geralmente retornando o ID do registro que foi deletado no payload.
+    ```mermaid
+    sequenceDiagram
+        participant User as Usuário
+        participant Client as Cliente
+        participant Server as Servidor
+        participant DB as Banco de Dados
 
-#### Respostas de Erro
+        User->>Client: Inicia criação de filme
+        Client->>Server: Requisição: R@DIR@-1@ (Listar todos os diretores)
+        Server->>DB: SELECT * FROM Directors
+        DB-->>Server: Retorna lista de diretores
+        Server-->>Client: Resposta: SUCCESS@DIR@-1@directors=[...]
 
-Ocorrem quando a operação não pôde ser concluída. O comando da mensagem será `ERROR`.
+        alt Diretor NÃO existe na lista
+            Client->>Server: Requisição: C@DIR@-1@name=Quentin Tarantino
+            Server->>DB: INSERT INTO Directors...
+            DB-->>Server: Retorna novo ID do diretor
+            Server-->>Client: Resposta: SUCCESS@DIR@1@id=1|name=...
+        end
 
-  - O payload da resposta geralmente contém uma chave `error` com uma string descrevendo o problema.
-  - Erros comuns incluem registro não encontrado, dados faltando na requisição ou formato de mensagem inválido.
-
-### Exemplos de Mensagens
-
-  * **Cliente para Servidor: Criar um novo diretor**
+        Client->>Server: Requisição: C@MOV@-1@title=Pulp Fiction|director_id=1|...
+        Server->>DB: INSERT INTO Movies...
+        DB-->>Server: Retorna novo ID do filme
+        Server-->>Client: Resposta: SUCCESS@MOV@25@id=25|...
+        Client->>User: Exibe mensagem de sucesso
     ```
-    C@DIR@-1@name=Christopher Nolan
+
+#### Operação: Ler (`READ`)
+
+  - **Descrição:** Lê um ou todos os registros de uma tabela.
+
+  - **Requisição (Cliente -\> Servidor):**
+
+      - Formato (Um registro): `R@<tabela>@<id>@`
+      - Formato (Todos): `R@<tabela>@-1@`
+      - Exemplo: `R@MOV@25@`
+
+  - **Resposta de Sucesso (Servidor -\> Cliente):**
+
+      - Formato: `SUCCESS@<tabela>@-1@<chave_plural>=[{...},{...}]`
+      - Exemplo: `SUCCESS@MOV@-1@movies=[{'id': 25, 'title': 'Pulp Fiction', ...}]`
+
+  - **Resposta de Erro:**
+
+      - Formato: `ERROR@<tabela>@<id>@error=Movie not found`
+
+  - **Fluxograma (Ler um Filme):**
+
+    ```mermaid
+    sequenceDiagram
+        participant User as Usuário
+        participant Client as Cliente
+        participant Server as Servidor
+        participant DB as Banco de Dados
+
+        User->>Client: Pede para ver filme com ID 25
+        Client->>Server: Requisição: R@MOV@25@
+        Server->>DB: SELECT * FROM Movies WHERE id = 25
+        DB-->>Server: Retorna dados do filme
+        Server-->>Client: Resposta: SUCCESS@MOV@-1@movies=[{...}]
+        Client->>User: Exibe dados do filme
     ```
-  * **Cliente para Servidor: Ler todos os filmes (usando o `WILDCARD_ID`)**
+
+#### Operação: Atualizar (`UPDATE`)
+
+  - **Descrição:** Modifica um registro existente.
+
+  - **Requisição (Cliente -\> Servidor):**
+
+      - Formato: `U@<tabela>@<id>@<payload_com_dados_a_mudar>`
+      - Exemplo: `U@MOV@25@rating=4.9|title=Pulp Fiction!`
+
+  - **Resposta de Sucesso (Servidor -\> Cliente):**
+
+      - Formato: `SUCCESS@<tabela>@<id>@<payload_com_todos_dados_atualizados>`
+      - Exemplo: `SUCCESS@MOV@25@id=25|title=Pulp Fiction!|rating=4.9|...`
+
+  - **Resposta de Erro:**
+
+      - Formato: `ERROR@<tabela>@<id>@error=Movie not found`
+
+  - **Fluxograma (Atualizar um Filme):**
+
+    ```mermaid
+    sequenceDiagram
+        participant User as Usuário
+        participant Client as Cliente
+        participant Server as Servidor
+        participant DB as Banco de Dados
+
+        User->>Client: Pede para atualizar filme ID 25
+        Client->>Server: Requisição: U@MOV@25@rating=4.9
+        Server->>DB: UPDATE Movies SET rating = 4.9 WHERE id = 25
+        DB-->>Server: Confirmação de atualização
+        Server-->>Client: Resposta: SUCCESS@MOV@25@id=25|...
+        Client->>User: Exibe mensagem de sucesso
     ```
-    R@MOV@-1@
+
+#### Operação: Deletar (`DELETE`)
+
+  - **Descrição:** Remove um registro do banco de dados.
+
+  - **Requisição (Cliente -\> Servidor):**
+
+      - Formato: `D@<tabela>@<id>@`
+      - Exemplo: `D@MOV@25@`
+
+  - **Resposta de Sucesso (Servidor -\> Cliente):**
+
+      - Formato: `SUCCESS@<tabela>@<id>@id=<id>`
+      - Exemplo: `SUCCESS@MOV@25@id=25`
+
+  - **Resposta de Erro:**
+
+      - Formato: `ERROR@<tabela>@<id>@error=Movie not found`
+
+  - **Fluxograma (Deletar um Filme):**
+
+    ```mermaid
+    sequenceDiagram
+        participant User as Usuário
+        participant Client as Cliente
+        participant Server as Servidor
+        participant DB as Banco de Dados
+
+        User->>Client: Pede para deletar filme ID 25
+        Client->>Server: Requisição: D@MOV@25@
+        Server->>DB: DELETE FROM Movies WHERE id = 25
+        DB-->>Server: Confirmação de exclusão
+        Server-->>Client: Resposta: SUCCESS@MOV@25@id=25
+        Client->>User: Exibe mensagem de sucesso
     ```
-  * **Servidor para Cliente: Resposta de sucesso com uma lista de filmes**
-    O payload contém uma chave "movies" cujo valor é a representação em string de uma lista de dicionários.
-    ```
-    SUCCESS@MOV@-1@movies=[{'id': 15, 'title': 'Inception', 'director_id': 1}, {'id': 16, 'title': 'The Dark Knight', 'director_id': 1}]
-    ```
-  * **Servidor para Cliente: Resposta de erro ao buscar um filme**
-    ```
-    ERROR@MOV@99@error=Movie not found
-    ```
+
+-----
 
 ## Interação do Cliente
 
@@ -152,15 +295,18 @@ Voce pode inserir (c), ler (r), atualizar (u), deletar registros (d) ou sair (e)
   - **`d` (Deletar):** O usuário informa o ID do filme a ser removido, e o cliente envia uma mensagem de `DELETE`.
   - **`e` (Sair):** Encerra a conexão com o servidor e finaliza o programa cliente.
 
-
 ## Limitações e Pontos de Melhoria
 
 Como um projeto com fins didáticos, a implementação atual possui algumas simplificações e limitações conhecidas que seriam abordadas em um ambiente de produção:
 
-* **Robustez do Protocolo de Mensagens:** O protocolo utiliza os caracteres `@`, `|` e `=` como delimitadores. Se algum desses caracteres for inserido em um campo de texto (como o nome de um filme), a lógica de parse da mensagem falhará, causando um erro. Uma solução em um sistema real seria tratar esses valores, por exemplo, com URL encoding.
+  * **Robustez do Protocolo de Mensagens:** O protocolo utiliza os caracteres `@`, `|` e `=` como delimitadores. Se algum desses caracteres for inserido em um campo de texto (como o nome de um filme), a lógica de parse da mensagem falhará, causando um erro. Uma solução em um sistema real seria tratar esses valores, por exemplo, com URL encoding.
 
-* **Gerenciamento de Diretores no Cliente:** A lógica para verificar se um diretor já existe antes de criar um filme está implementada no lado do cliente. Isso resulta em múltiplas chamadas de rede para uma única operação do usuário (uma para ler os diretores, possivelmente outra para criar um novo diretor, e uma terceira para criar o filme). Uma implementação mais eficiente transferiria essa responsabilidade para o servidor, que resolveria a dependência do diretor em uma única requisição.
+  * **Gerenciamento de Diretores no Cliente:** A lógica para verificar se um diretor já existe antes de criar um filme está implementada no lado do cliente. Isso resulta em múltiplas chamadas de rede para uma única operação do usuário. Uma implementação mais eficiente transferiria essa responsabilidade para o servidor.
 
-* **Esquema do Banco de Dados:** A separação dos diretores em uma tabela própria é uma prática de normalização correta, mas a forma como é utilizada serve principalmente para demonstrar a interação entre duas tabelas em um sistema cliente-servidor. O esquema como um todo é simplificado para este exemplo e poderia ser expandido com mais campos e relações (ex: atores, estúdios, etc.).
+  * **Esquema do Banco de Dados:** A separação dos diretores em uma tabela própria serve principalmente para demonstrar a interação entre duas tabelas. O esquema como um todo é simplificado e poderia ser expandido com mais campos e relações (ex: atores, estúdios, etc.).
 
-* **Ausência de Paginação:** A requisição para ler múltiplos registros (ex: listar todos os filmes) retorna o conjunto de dados completo de uma só vez. Em um banco de dados com milhares de registros, isso seria extremamente ineficiente, consumindo uma grande quantidade de memória no servidor, banda de rede e recursos no cliente. Uma implementação de produção exigiria paginação, permitindo que o cliente solicitasse os dados em "páginas" menores (ex: "traga os 20 primeiros filmes", "agora traga os próximos 20").
+  * **Ausência de Paginação:** A requisição para ler múltiplos registros (ex: listar todos os filmes) retorna o conjunto de dados completo de uma só vez. Em um banco de dados com milhares de registros, isso seria extremamente ineficiente. Uma implementação de produção exigiria paginação.
+
+  * **Falta de Segurança e Autenticação:** O sistema não possui nenhuma camada de autenticação ou autorização. Qualquer pessoa com acesso à rede pode se conectar ao servidor e executar qualquer operação.
+
+  * **Tratamento de Erros Simplificado:** As respostas de erro são genéricas. A utilização de códigos de erro específicos permitiria que o cliente tratasse as falhas de forma mais inteligente e apresentasse feedback mais útil ao usuário.

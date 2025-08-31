@@ -242,7 +242,7 @@ def get_or_create_director(name: str, sock: socket.socket) -> int:
     try:
         response = d.receive_message(sock)
     except socket.timeout:
-        print("No response received within 1 second.")
+        # print("No response received within 1 second.")
         return -1
 
     parsed_msg = d.parse_message(response)
@@ -254,7 +254,7 @@ def get_or_create_director(name: str, sock: socket.socket) -> int:
                 print("Director found:", director)
                 return director.get("id")
 
-        print("Director not found, creating a new one.")
+        # print("Director not found, creating a new one.")
         # Se o diretor não for encontrado, cria um novo
         d.send_message(
             sock,
@@ -269,7 +269,7 @@ def get_or_create_director(name: str, sock: socket.socket) -> int:
         try:
             response = d.receive_message(sock)
         except socket.timeout:
-            print("No response received within 1 second.")
+            # print("No response received within 1 second.")
             return -1
 
         parsed_director_response = d.parse_message(response)
@@ -307,8 +307,8 @@ def handle_create():
 
     try:
         response = d.receive_message(sock)
-        if response:
-            print("Received response from server:", response)
+        # if response:
+        #     print("Received response from server:", response)
     except socket.timeout:
         print("No response received within 1 second.")
 
