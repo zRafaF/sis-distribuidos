@@ -1,7 +1,7 @@
 # Makefile for the Sockets CRUD application
 
 # Use 'python3' if your system defaults to Python 2, otherwise 'python' is fine.
-PYTHON = python
+PYTHON = python3
 
 # Target to run the server
 # Usage: make server
@@ -16,4 +16,4 @@ client:
 	$(PYTHON) -m client.main
 
 # Phony targets tell make that these are command names, not files.
-.PHONY: server client
+.PHONY: server client 
