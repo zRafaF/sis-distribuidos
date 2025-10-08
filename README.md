@@ -1,4 +1,8 @@
-# Sistema Distribuído com Pyro5 (RMI)
+**Grupo:**
+* Rafael Farias Meneses / 2263831
+* Fábio Bays de Araujo / 2370441
+
+# Sistema Distribuído de Gerenciamento de filmes com Pyro5 (RMI)
 
 Este projeto implementa um sistema distribuído para gerenciamento de filmes e diretores utilizando a API de Remote Method Invocation (RMI) do Pyro5 em Python.
 
