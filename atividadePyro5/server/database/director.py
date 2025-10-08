@@ -1,7 +1,6 @@
 import schema
 import defines as d
 
-
 def handle_create_director(name : str) -> d.ReturnCodes:
     new_director = schema.Directors(
         name=name
@@ -13,7 +12,7 @@ def handle_create_director(name : str) -> d.ReturnCodes:
 
     return d.ReturnCodes.SUCCESS.value
 
-def handle_read_director(record_id: int) -> list:
+def handle_read_director_by_id(record_id: int) -> list:
     director_id = record_id
     print(f"Reading director with ID: {director_id}")
     if director_id == d.WILDCARD_ID:
@@ -31,19 +30,22 @@ def handle_read_director(record_id: int) -> list:
 
     if len(directors_list) == 0:
         print("Could not read directors")
-        return d.ReturnCodes.ERROR.value
+        return [d.ReturnCodes.ERROR.value]
 
     print(f"Read {len(directors_list)} directors from database.")
 
     return [d.ReturnCodes.SUCCESS.value, directors_list]
 
-def handle_read_director(director_name : str) -> list:
+def handle_read_director_by_name(director_name : str) -> list:
     print(f"Reading director with name: {director_name}")
-    director = schema.Directors.select().where(schema.Directors.name == director_name)
-
-    if director == None:
+    dir_query = schema.Directors.select().where(schema.Directors.name == director_name)
+    if len(dir_query) == 0:
         print("Could not read director")
-        return d.ReturnCodes.ERROR.value
+        return [d.ReturnCodes.ERROR.value]
+    
+    director = {}
+    director['id'] = dir_query[0].id
+    director['name'] = dir_query[0].name
 
     print(f"Read director with name {director_name} from database.")
 

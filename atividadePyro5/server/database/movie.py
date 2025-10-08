@@ -49,20 +49,53 @@ def handle_read_movie(record_id: int) -> list:
 
 
 def handle_delete_movie(record_id: int) -> d.ReturnCodes:
-    print(f"Deleting movie with ID: {record_id}")
-    movie = schema.Movies.get_by_id(record_id)
-    if not movie:
-        print(f"No movie with ID: {record_id}")
-        return d.ReturnCodes.Error.value
+    if record_id != d.WILDCARD_ID:
+        print(f"Deleting movie with ID: {record_id}")
+        movie = schema.Movies.select().where(schema.Movies.id == record_id)
+        if len(movie) == 0:
+            print(f"No movie with ID: {record_id}")
+            return d.ReturnCodes.ERROR.value
 
-    movie.delete_instance()
-    print(f"Deleted movie with ID: {record_id}")
+        
+        movies_list = [Movie.Movie(
+                            movie[0].id,
+                            movie[0].director_id.id,
+                            movie[0].title,
+                            None,
+                            movie[0].duration_min,
+                            movie[0].gender,
+                            movie[0].rating,
+                            )
+                    ]
+        movie[0].delete_instance()
+        print(f"Deleted movie with ID: {record_id}")
 
-    return d.ReturnCodes.SUCCESS.value
+        return [d.ReturnCodes.SUCCESS.value, movies_list]
 
+    print('Deleting all movies')
+    movies = schema.Movies.select()
+    
+    movies_list = [
+        Movie.Movie( 
+            movie.id,
+            movie.director_id.id,
+            movie.title,
+            None, 
+            movie.duration_min,
+            movie.gender,
+            movie.rating,
+        ) 
+        for movie in movies
+    ]
+
+    schema.Movies.delete().execute()
+    print('Deleted all movies')
+
+    return [d.ReturnCodes.SUCCESS.value, movies_list]
+    
 def handle_update_movie(record_id: int, mov : Movie.Movie) -> d.ReturnCodes: 
-    movie = schema.Movies.get_by_id(record_id)
-    if not movie:
+    movie = schema.Movies.select().where(schema.Movies.id == record_id)
+    if len(movie) == 0:
         print(f"No movie with ID: {record_id}")
         d.ReturnCodes.ERROR.value
 

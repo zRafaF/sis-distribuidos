@@ -3,6 +3,12 @@
 # Use 'python3' if your system defaults to Python 2, otherwise 'python' is fine.
 PYTHON = python3
 
+# Target to run Pyro5 Name Server
+# Usage: make pyro5
+pyro5:
+	@echo "Starting Pyro5 Name Server..."
+	pyro5-ns
+
 # Target to run the server
 # Usage: make server
 server:
