@@ -36,7 +36,7 @@ class Movies(BaseModel):
     director_id = peewee.ForeignKeyField(Directors, backref="movies")
     rating = peewee.FloatField(default=0.0)
     duration_min = peewee.IntegerField(default=0)
-    gender = peewee.CharField(default="Unknown")
+    genre = peewee.CharField(default="Unknown")
 
     created_at = peewee.DateTimeField(default=datetime.datetime.now)
     updated_at = peewee.DateTimeField()
@@ -44,3 +44,4 @@ class Movies(BaseModel):
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.now()
         return super().save(*args, **kwargs)
+

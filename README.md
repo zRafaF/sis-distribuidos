@@ -89,7 +89,7 @@ Armazena as informações dos filmes, com uma referência à tabela `Directors`.
 | `director_id`| `INTEGER` | Chave Estrangeira que referencia `Directors.id`. |
 | `rating` | `REAL` | Avaliação do filme (ex: 4.5). |
 | `duration_min`| `INTEGER` | Duração do filme em minutos. |
-| `gender` | `VARCHAR` | Gênero do filme (ex: Ação, Comédia). |
+| `genre` | `VARCHAR` | Gênero do filme (ex: Ação, Comédia). |
 | `created_at`| `DATETIME` | Data e hora da criação do registro. |
 | `updated_at`| `DATETIME` | Data e hora da última atualização. |
 
@@ -120,5 +120,35 @@ Por exemplo, o campo `age` da tabela `director` aceita apenas números inteiros 
       }
     }
   ]
+}
+```
+
+## Utilização
+
+### Comandos copiar colar
+
+#### Criar diretor
+Path: `http://127.0.0.1:8000/movies`
+Tipo: `POST`
+
+body:
+```json
+{
+  "name": "Mike",
+  "age": 45
+}
+```
+
+#### Criar filme
+Path: `http://127.0.0.1:8000/movies`
+Tipo: `POST`
+body:
+```json
+{
+  "title": "Inception",
+  "director_id": 1,
+  "rating": 8.8,
+  "duration_min": 148,
+  "genre": "Sci-Fi"
 }
 ```

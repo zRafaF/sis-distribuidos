@@ -11,14 +11,14 @@ sock.settimeout(1.0)
 
 class Movie:
     def __init__(
-        self, director_id, movie_id, director_name, title, rating, gender, duration_min
+        self, director_id, movie_id, director_name, title, rating, genre, duration_min
     ):
         self.director_db_id = director_id
         self.movie_db_id = movie_id
         self.director_name = director_name
         self.title = title
         self.rating = rating
-        self.gender = gender
+        self.genre = genre
         self.duration_min = duration_min
 
     def print_self(self):
@@ -26,7 +26,7 @@ class Movie:
             f"ID do filme no banco de dados: {self.movie_db_id}\n"
             f"Nome do filme: {self.title}\n"
             f"Nome do diretor: {self.director_name}\n"
-            f"Gênero do filme: {self.gender}\n"
+            f"Gênero do filme: {self.genre}\n"
             f"Duração do filme em minutos: {self.duration_min}\n"
             f"Nota do filme (0 a 5): {self.rating}"
         )
@@ -117,7 +117,7 @@ def handle_update():
                 movie.director_name,
                 movie.title,
                 movie.rating,
-                movie.gender,
+                movie.genre,
                 movie.duration_min,
             )
 
@@ -144,7 +144,7 @@ def handle_update():
                     print("LOG: Erro ao atualizar nome do diretor")
                 elif usr_input == "g":
                     print("Insira o novo gênero do filme")
-                    updated_movie.gender = input()
+                    updated_movie.genre = input()
                     update = True
                 elif usr_input == "a":
                     print("Insira a nova avaliação do filme")
@@ -205,7 +205,7 @@ def update_movie(new_data: Movie):
             payload_dict={
                 "title": new_data.title,
                 "director_id": new_data.director_db_id,
-                "gender": new_data.gender,
+                "genre": new_data.genre,
                 "rating": new_data.rating,
                 "duration_min": new_data.duration_min,
             },
@@ -298,7 +298,7 @@ def handle_create():
             payload_dict={
                 "title": new_data[0],
                 "director_id": new_director_id,
-                "gender": new_data[2],
+                "genre": new_data[2],
                 "rating": new_data[3],
                 "duration_min": new_data[4],
             },
@@ -370,7 +370,7 @@ def get_movie_data(id):
                 director_name=director.get("name") if director else "Unknown",
                 title=movie.get("title"),
                 rating=movie.get("rating"),
-                gender=movie.get("gender"),
+                genre=movie.get("genre"),
                 duration_min=movie.get("duration_min"),
             )
         )
