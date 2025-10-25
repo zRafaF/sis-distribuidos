@@ -75,6 +75,7 @@ Armazena os nomes dos diretores.
 | :--- | :--- | :--- |
 | `id` | `INTEGER` | Chave Primária, autoincremento. |
 | `name` | `VARCHAR` | Nome do diretor. |
+| `age` | `INTEGER` | Idade do diretor. |
 | `created_at`| `DATETIME` | Data e hora da criação do registro. |
 | `updated_at`| `DATETIME` | Data e hora da última atualização. |
 
@@ -93,7 +94,6 @@ Armazena as informações dos filmes, com uma referência à tabela `Directors`.
 | `created_at`| `DATETIME` | Data e hora da criação do registro. |
 | `updated_at`| `DATETIME` | Data e hora da última atualização. |
 
------
 
 -----
 
@@ -125,10 +125,26 @@ Por exemplo, o campo `age` da tabela `director` aceita apenas números inteiros 
 
 ## Utilização
 
+### Acessando a documentação da API
+Após iniciar o servidor, você pode acessar a documentação interativa da API gerada automaticamente pelo FastAPI em:
+
+```
+http://127.0.0.1:8000/docs#/
+```
+
+ou
+
+```
+http://127.0.0.1:8000/redoc
+```
+
+Você pode testar todos os endpoints diretamente através desta interface.
+
+
 ### Comandos copiar colar
 
 #### Criar diretor
-Path: `http://127.0.0.1:8000/movies`
+Path: `http://127.0.0.1:8000/directors`
 Tipo: `POST`
 
 body:

@@ -12,8 +12,7 @@ server:
 # Target to run the client
 # Usage: make client
 client:
-	@echo "Starting the client..."
-	$(PYTHON) -m client.main
+	@echo "Deprecated. Does not apply to FastAPI server."
 
 # Phony targets tell make that these are command names, not files.
 .PHONY: server client
