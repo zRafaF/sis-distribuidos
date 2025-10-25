@@ -7,7 +7,7 @@ PYTHON = python
 # Usage: make server
 server:
 	@echo "Starting the server..."
-	$(PYTHON) -m server.main
+	fastapi dev ./server/main.py
 
 # Target to run the client
 # Usage: make client

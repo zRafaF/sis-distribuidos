@@ -1,5 +1,17 @@
-import datetime
 import peewee
+import os
+import datetime
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+db = peewee.SqliteDatabase(os.path.join(current_dir, "database.db"))
+
+
+def initialize_db() -> None:
+    db.bind([Directors, Movies])
+    db.connect()
+    db.create_tables([Directors, Movies], safe=True)
+    print("Database initialized with Director and Movie tables.")
+
 
 
 class BaseModel(peewee.Model):
@@ -9,6 +21,7 @@ class BaseModel(peewee.Model):
 
 class Directors(BaseModel):
     name = peewee.CharField()
+    age = peewee.IntegerField()
 
     created_at = peewee.DateTimeField(default=datetime.datetime.now)
     updated_at = peewee.DateTimeField()
