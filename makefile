@@ -7,6 +7,10 @@ PYTHON = python
 # Usage: make server
 server:
 	@echo "Starting the server..."
+	fastapi run ./server/main.py
+
+dev:
+	@echo "Starting the server in dev mode..."
 	fastapi dev ./server/main.py
 
 # Target to run the client
@@ -15,4 +19,4 @@ client:
 	@echo "Deprecated. Does not apply to FastAPI server."
 
 # Phony targets tell make that these are command names, not files.
-.PHONY: server client
+.PHONY: server client dev
