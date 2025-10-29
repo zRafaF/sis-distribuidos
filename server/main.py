@@ -157,7 +157,7 @@ async def get_movie(movie_id: int) -> dict:
         movie = db_core.Movies.get_by_id(movie_id)
         return {
             "message": "Filme recuperado com sucesso.",
-            "data": model_to_dict(movie),
+            "data": model_to_dict(movie, recurse=False), # <-- Adicione recurse=False
         }
     except db_core.Movies.DoesNotExist:
         raise HTTPException(status_code=404, detail="Filme não encontrado.")
@@ -174,7 +174,7 @@ async def get_all_movies(page: PositiveInt = 1, size: PositiveInt = 10) -> dict:
     movies = db_core.Movies.select().paginate(page, size)
     return {
         "message": "Filmes recuperados com sucesso.",
-        "data": [model_to_dict(movie) for movie in movies],
+        "data": [model_to_dict(movie, recurse=False) for movie in movies ],
     }
 
 
@@ -200,11 +200,12 @@ def create_movie(movie: Movie) -> dict:
         director_id=director,
         rating=movie.rating,
         duration_min=movie.duration_min,
+        genre=movie.genre,  # <-- Você esqueceu de adicionar isso
     )
     new_movie.save()
     return {
         "message": "Filme criado com sucesso.",
-        "data": model_to_dict(new_movie),
+        "data": model_to_dict(new_movie, recurse=False), # <-- Adicione recurse=False
     }
 
 
@@ -255,11 +256,12 @@ async def update_movie(movie_id: int, movie: Movie) -> dict:
         existing_movie.director_id = movie.director_id
         existing_movie.rating = movie.rating
         existing_movie.duration_min = movie.duration_min
+        existing_movie.genre = movie.genre # <-- Adicione isso aqui também
         existing_movie.save()
 
         return {
             "message": "Filme atualizado com sucesso.",
-            "data": model_to_dict(existing_movie),
+            "data": model_to_dict(existing_movie, recurse=False), # <-- Adicione recurse=False
         }
     except db_core.Movies.DoesNotExist:
         raise HTTPException(status_code=404, detail="Filme não encontrado.")
