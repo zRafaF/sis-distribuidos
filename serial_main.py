@@ -1,35 +1,45 @@
 import sys
+import argparse
 import numpy as np
+import time
 from boxblur_logic import generate_box_blur_kernel, apply_convolution, KERNEL_SIZE
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python serial_main.py <input_path> [output_path]")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", required=True)
+    parser.add_argument("--size", type=int, required=True)
+    parser.add_argument("--output", default="serial_result.raw")
+    args = parser.parse_args()
+
+    # Carregar
+    try:
+        raw_data = np.fromfile(args.input, dtype=np.uint8)
+        image = raw_data.reshape((args.size, args.size))
+    except FileNotFoundError:
+        # Erros vão para stderr para não quebrar o benchmark
+        print(f"Erro: Arquivo {args.input} não encontrado.", file=sys.stderr)
         sys.exit(1)
 
-    input_path = sys.argv[1]
-    output_path = sys.argv[2] if len(sys.argv) > 2 else "serial_result.raw"
+    # Processar
+    start = time.time()
+    kernel = generate_box_blur_kernel(KERNEL_SIZE)
+    result = apply_convolution(image, kernel)
+    duration = time.time() - start
 
+    # Salvar de forma robusta (Python nativo + tobytes)
     try:
-        # Load Data
-        with open(input_path, "rb") as f:
-            raw_data = np.fromfile(f, dtype=np.uint8)
+        with open(args.output, "wb") as f:
+            f.write(result.astype(np.uint8).tobytes())
 
-        # Reshape to square
-        size = int(np.sqrt(raw_data.size))
-        image = raw_data.reshape((size, size))
-
-        # Process
-        kernel = generate_box_blur_kernel(KERNEL_SIZE)
-        result = apply_convolution(image, kernel)
-
-        # Save
-        result.flatten().tofile(output_path)
+        # O print do tempo vai para stdout (sucesso)
+        print(f"{duration:.4f}")
 
     except Exception as e:
-        print(f"Error in serial execution: {e}")
-        sys.exit(1)
+        print(f"Erro ao salvar: {e}", file=sys.stderr)
+        # Ainda imprimimos o tempo para o benchmark não falhar totalmente,
+        # mas o erro estará visível no log
+        print(f"{duration:.4f}")
 
 
 if __name__ == "__main__":

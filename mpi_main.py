@@ -1,6 +1,7 @@
 import sys
-import os
+import argparse
 import numpy as np
+import time
 from mpi4py import MPI
 from boxblur_logic import (
     generate_box_blur_kernel,
@@ -15,111 +16,94 @@ def main():
     rank = comm.Get_rank()
     size = comm.Get_size()
 
-    # Check for silent mode (to avoid spamming stdout during benchmarks)
-    verbose = "--verbose" in sys.argv
-    input_path = (
-        sys.argv[1]
-        if len(sys.argv) > 1 and not sys.argv[1].startswith("-")
-        else "input_files/image_input.raw"
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", required=True)
+    parser.add_argument("--size", type=int, required=True)
+    parser.add_argument("--output", default="mpi_result.raw")
+    args = parser.parse_args()
 
-    # --- 1. Master Preparation ---
-    image_shape = None
+    N = args.size
+
+    # --- 1. Preparação ---
+    local_rows = N // size
     full_data = None
-
     if rank == 0:
-        if verbose:
-            print(f"Master: Loading {input_path}", flush=True)
         try:
-            with open(input_path, "rb") as file:
-                raw_data = np.fromfile(file, dtype=np.uint8)
-
-            array_side = int(np.sqrt(raw_data.size))
-            full_data = raw_data.reshape((array_side, array_side))
-
-            # Handle height padding
-            rows, cols = full_data.shape
-            if rows % size != 0:
-                rows = (rows // size) * size
-                full_data = full_data[:rows, :]
-
-            # Contiguous memory for MPI
-            full_data = np.ascontiguousarray(full_data)
-            image_shape = full_data.shape
-
-        except Exception as e:
-            print(f"Error loading image: {e}")
+            raw = np.fromfile(args.input, dtype=np.uint8).reshape((N, N))
+            if raw.shape[0] % size != 0:
+                raw = raw[: (N // size) * size, :]
+            full_data = np.ascontiguousarray(raw)
+        except FileNotFoundError:
             sys.exit(1)
 
-    # --- 2. Broadcast & Scatter ---
-    image_shape = comm.bcast(image_shape, root=0)
-    total_rows, cols = image_shape
-    rows_per_rank = total_rows // size
+    # --- 2. Scatter ---
+    local_chunk = np.zeros((local_rows, N), dtype=np.uint8)
 
-    local_data = np.zeros((rows_per_rank, cols), dtype=np.uint8)
-    comm.Scatter(full_data, local_data, root=0)
+    if rank == 0:
+        start_time = time.time()
+
+    comm.Scatter(full_data, local_chunk, root=0)
 
     # --- 3. Halo Exchange ---
-    top_halo = np.zeros((HALO_SIZE, cols), dtype=np.uint8)
-    bottom_halo = np.zeros((HALO_SIZE, cols), dtype=np.uint8)
+    top_halo = np.zeros((HALO_SIZE, N), dtype=np.uint8)
+    bottom_halo = np.zeros((HALO_SIZE, N), dtype=np.uint8)
 
-    up_neighbor = rank - 1
-    down_neighbor = rank + 1
-    TAG_UP, TAG_DOWN = 10, 20
-    requests = []
-
-    # Exchange logic
-    if up_neighbor >= 0:
-        requests.append(
+    reqs = []
+    if rank > 0:
+        reqs.append(
             comm.Isend(
-                np.ascontiguousarray(local_data[0:HALO_SIZE, :]),
-                dest=up_neighbor,
-                tag=TAG_UP,
+                np.ascontiguousarray(local_chunk[:HALO_SIZE]), dest=rank - 1, tag=11
             )
         )
-    if down_neighbor < size:
-        requests.append(comm.Irecv(bottom_halo, source=down_neighbor, tag=TAG_UP))
-    if down_neighbor < size:
-        requests.append(
+        reqs.append(comm.Irecv(top_halo, source=rank - 1, tag=22))
+
+    if rank < size - 1:
+        reqs.append(
             comm.Isend(
-                np.ascontiguousarray(local_data[-HALO_SIZE:, :]),
-                dest=down_neighbor,
-                tag=TAG_DOWN,
+                np.ascontiguousarray(local_chunk[-HALO_SIZE:]), dest=rank + 1, tag=22
             )
         )
-    if up_neighbor >= 0:
-        requests.append(comm.Irecv(top_halo, source=up_neighbor, tag=TAG_DOWN))
+        reqs.append(comm.Irecv(bottom_halo, source=rank + 1, tag=11))
 
-    MPI.Request.Waitall(requests)
+    MPI.Request.Waitall(reqs)
 
-    # --- 4. Process ---
-    parts = []
-    if up_neighbor >= 0:
-        parts.append(top_halo)
-    parts.append(local_data)
-    if down_neighbor < size:
-        parts.append(bottom_halo)
+    # --- 4. Computação ---
+    process_stack = []
+    if rank > 0:
+        process_stack.append(top_halo)
+    process_stack.append(local_chunk)
+    if rank < size - 1:
+        process_stack.append(bottom_halo)
 
-    compute_data = np.vstack(parts)
+    compute_input = np.vstack(process_stack)
     kernel = generate_box_blur_kernel(KERNEL_SIZE)
-    processed_chunk = apply_convolution(compute_data, kernel)
 
-    # --- 5. Clip & Gather ---
-    start_row = HALO_SIZE if up_neighbor >= 0 else 0
-    end_row = processed_chunk.shape[0] - (HALO_SIZE if down_neighbor < size else 0)
+    processed = apply_convolution(compute_input, kernel)
 
-    final_strip = np.ascontiguousarray(processed_chunk[start_row:end_row, :])
+    start_row = HALO_SIZE if rank > 0 else 0
+    end_row = processed.shape[0] - (HALO_SIZE if rank < size - 1 else 0)
 
-    gathered_image = None
+    result_chunk = np.ascontiguousarray(
+        processed[start_row:end_row, :].clip(0, 255).astype(np.uint8)
+    )
+
+    # --- 5. Gather ---
+    final_image = None
     if rank == 0:
-        gathered_image = np.zeros(image_shape, dtype=np.uint8)
+        final_image = np.zeros((local_rows * size, N), dtype=np.uint8)
 
-    comm.Gather(final_strip, gathered_image, root=0)
+    comm.Gather(result_chunk, final_image, root=0)
 
     if rank == 0:
-        gathered_image.flatten().tofile("mpi_result.raw")
-        if verbose:
-            print("Master: Done.", flush=True)
+        duration = time.time() - start_time
+        # Correção Robusta: write + tobytes
+        try:
+            with open(args.output, "wb") as f:
+                f.write(final_image.tobytes())
+            print(f"{duration:.4f}")
+        except Exception as e:
+            print(f"Erro ao salvar MPI: {e}", file=sys.stderr)
+            print(f"{duration:.4f}")
 
 
 if __name__ == "__main__":

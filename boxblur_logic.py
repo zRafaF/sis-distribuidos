@@ -1,21 +1,13 @@
 import numpy as np
 from scipy.signal import convolve2d
 
-# Configuration
-KERNEL_SIZE = 19
+KERNEL_SIZE = 15
 HALO_SIZE = KERNEL_SIZE // 2
 
 
 def generate_box_blur_kernel(size):
-    """Generates a normalized box blur kernel."""
-    num_of_elements = size * size
-    return np.full((size, size), 1.0 / num_of_elements)
+    return np.ones((size, size), dtype=np.float32) / (size * size)
 
 
-def apply_convolution(arr, kernel):
-    """
-    Applies convolution using 'same' mode.
-    Note: In MPI, this is applied to the (Halo + Data + Halo) block.
-    """
-    convolved = convolve2d(arr, kernel, mode="same", boundary="fill", fillvalue=0)
-    return np.clip(convolved, 0, 255).astype(np.uint8)
+def apply_convolution(image, kernel):
+    return convolve2d(image, kernel, mode="same", boundary="fill", fillvalue=0)
