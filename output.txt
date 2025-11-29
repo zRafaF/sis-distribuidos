@@ -1,0 +1,194 @@
+==================== KERNEL SIZE: 3 ====================
+
+[Img 1024x1024] Serial:
+  Run 1: Cálculo=0.025s | Total=1.14s
+  Run 2: Cálculo=0.024s | Total=1.21s
+  Run 3: Cálculo=0.022s | Total=1.00s
+  -> Média Cálculo: 0.0236s
+[Img 1024x1024] MPI n=2:
+  Run 1: Cálculo=0.013s | Total=1.08s
+  Run 2: Cálculo=0.014s | Total=1.10s
+  Run 3: Cálculo=0.016s | Total=1.12s
+  -> Média Cálculo: 0.0143s (Speedup: 1.65x)
+[Img 1024x1024] MPI n=4:
+  Run 1: Cálculo=0.010s | Total=1.21s
+  Run 2: Cálculo=0.008s | Total=1.20s
+  Run 3: Cálculo=0.014s | Total=1.27s
+  -> Média Cálculo: 0.0105s (Speedup: 2.24x)
+[Img 1024x1024] MPI n=8:
+  Run 1: Cálculo=0.013s | Total=1.67s
+  Run 2: Cálculo=0.011s | Total=1.78s
+  Run 3: Cálculo=0.009s | Total=1.79s
+  -> Média Cálculo: 0.0107s (Speedup: 2.20x)
+
+[Img 2048x2048] Serial:
+  Run 1: Cálculo=0.091s | Total=1.10s
+  Run 2: Cálculo=0.085s | Total=1.15s
+  Run 3: Cálculo=0.095s | Total=1.13s
+  -> Média Cálculo: 0.0902s
+[Img 2048x2048] MPI n=2:
+  Run 1: Cálculo=0.059s | Total=1.24s
+  Run 2: Cálculo=0.078s | Total=1.27s
+  Run 3: Cálculo=0.059s | Total=1.19s
+  -> Média Cálculo: 0.0653s (Speedup: 1.38x)
+[Img 2048x2048] MPI n=4:
+  Run 1: Cálculo=0.037s | Total=1.27s
+  Run 2: Cálculo=0.033s | Total=1.24s
+  Run 3: Cálculo=0.031s | Total=1.29s
+  -> Média Cálculo: 0.0338s (Speedup: 2.67x)
+[Img 2048x2048] MPI n=8:
+  Run 1: Cálculo=0.033s | Total=1.72s
+  Run 2: Cálculo=0.038s | Total=1.64s
+  Run 3: Cálculo=0.059s | Total=1.65s
+  -> Média Cálculo: 0.0432s (Speedup: 2.09x)
+
+[Img 4096x4096] Serial:
+  Run 1: Cálculo=0.378s | Total=1.39s
+  Run 2: Cálculo=0.367s | Total=1.40s
+  Run 3: Cálculo=0.380s | Total=1.50s
+  -> Média Cálculo: 0.3749s
+[Img 4096x4096] MPI n=2:
+  Run 1: Cálculo=0.233s | Total=1.45s
+  Run 2: Cálculo=0.246s | Total=1.36s
+  Run 3: Cálculo=0.235s | Total=1.31s
+  -> Média Cálculo: 0.2377s (Speedup: 1.58x)
+[Img 4096x4096] MPI n=4:
+  Run 1: Cálculo=0.147s | Total=1.36s
+  Run 2: Cálculo=0.139s | Total=1.42s
+  Run 3: Cálculo=0.132s | Total=1.44s
+  -> Média Cálculo: 0.1395s (Speedup: 2.69x)
+[Img 4096x4096] MPI n=8:
+  Run 1: Cálculo=0.092s | Total=1.62s
+  Run 2: Cálculo=0.105s | Total=1.76s
+  Run 3: Cálculo=0.106s | Total=1.76s
+  -> Média Cálculo: 0.1010s (Speedup: 3.71x)
+
+==================== KERNEL SIZE: 15 ====================
+
+[Img 1024x1024] Serial:
+  Run 1: Cálculo=0.266s | Total=1.23s
+  Run 2: Cálculo=0.260s | Total=1.24s
+  Run 3: Cálculo=0.266s | Total=1.33s
+  -> Média Cálculo: 0.2639s
+[Img 1024x1024] MPI n=2:
+  Run 1: Cálculo=0.146s | Total=1.43s
+  Run 2: Cálculo=0.148s | Total=1.41s
+  Run 3: Cálculo=0.153s | Total=1.53s
+  -> Média Cálculo: 0.1492s (Speedup: 1.77x)
+[Img 1024x1024] MPI n=4:
+  Run 1: Cálculo=0.140s | Total=1.64s
+  Run 2: Cálculo=0.102s | Total=1.50s
+  Run 3: Cálculo=0.093s | Total=1.37s
+  -> Média Cálculo: 0.1117s (Speedup: 2.36x)
+[Img 1024x1024] MPI n=8:
+  Run 1: Cálculo=0.073s | Total=1.78s
+  Run 2: Cálculo=0.065s | Total=1.66s
+  Run 3: Cálculo=0.077s | Total=1.58s
+  -> Média Cálculo: 0.0718s (Speedup: 3.68x)
+
+[Img 2048x2048] Serial:
+  Run 1: Cálculo=1.128s | Total=2.26s
+  Run 2: Cálculo=1.013s | Total=2.01s
+  Run 3: Cálculo=1.052s | Total=2.06s
+  -> Média Cálculo: 1.0644s
+[Img 2048x2048] MPI n=2:
+  Run 1: Cálculo=0.584s | Total=1.76s
+  Run 2: Cálculo=0.557s | Total=1.75s
+  Run 3: Cálculo=0.593s | Total=1.77s
+  -> Média Cálculo: 0.5776s (Speedup: 1.84x)
+[Img 2048x2048] MPI n=4:
+  Run 1: Cálculo=0.336s | Total=1.64s
+  Run 2: Cálculo=0.348s | Total=1.70s
+  Run 3: Cálculo=0.365s | Total=1.64s
+  -> Média Cálculo: 0.3497s (Speedup: 3.04x)
+[Img 2048x2048] MPI n=8:
+  Run 1: Cálculo=0.222s | Total=1.94s
+  Run 2: Cálculo=0.234s | Total=1.88s
+  Run 3: Cálculo=0.236s | Total=2.20s
+  -> Média Cálculo: 0.2309s (Speedup: 4.61x)
+
+[Img 4096x4096] Serial:
+  Run 1: Cálculo=4.270s | Total=5.44s
+  Run 2: Cálculo=4.253s | Total=5.32s
+  Run 3: Cálculo=4.260s | Total=5.43s
+  -> Média Cálculo: 4.2612s
+[Img 4096x4096] MPI n=2:
+  Run 1: Cálculo=2.433s | Total=3.76s
+  Run 2: Cálculo=2.359s | Total=3.60s
+  Run 3: Cálculo=2.424s | Total=3.56s
+  -> Média Cálculo: 2.4054s (Speedup: 1.77x)
+[Img 4096x4096] MPI n=4:
+  Run 1: Cálculo=1.305s | Total=2.63s
+  Run 2: Cálculo=1.420s | Total=2.89s
+  Run 3: Cálculo=1.357s | Total=2.74s
+  -> Média Cálculo: 1.3610s (Speedup: 3.13x)
+[Img 4096x4096] MPI n=8:
+  Run 1: Cálculo=0.968s | Total=2.89s
+  Run 2: Cálculo=0.837s | Total=2.60s
+  Run 3: Cálculo=0.876s | Total=2.66s
+  -> Média Cálculo: 0.8935s (Speedup: 4.77x)
+
+==================== KERNEL SIZE: 21 ====================
+
+[Img 1024x1024] Serial:
+  Run 1: Cálculo=0.495s | Total=1.57s
+  Run 2: Cálculo=0.573s | Total=1.67s
+  Run 3: Cálculo=0.528s | Total=1.57s
+  -> Média Cálculo: 0.5321s
+[Img 1024x1024] MPI n=2:
+  Run 1: Cálculo=0.278s | Total=1.44s
+  Run 2: Cálculo=0.280s | Total=1.49s
+  Run 3: Cálculo=0.280s | Total=1.51s
+  -> Média Cálculo: 0.2795s (Speedup: 1.90x)
+[Img 1024x1024] MPI n=4:
+  Run 1: Cálculo=0.176s | Total=1.50s
+  Run 2: Cálculo=0.172s | Total=1.57s
+  Run 3: Cálculo=0.200s | Total=1.59s
+  -> Média Cálculo: 0.1828s (Speedup: 2.91x)
+[Img 1024x1024] MPI n=8:
+  Run 1: Cálculo=0.114s | Total=1.75s
+  Run 2: Cálculo=0.113s | Total=1.72s
+  Run 3: Cálculo=0.120s | Total=1.75s
+  -> Média Cálculo: 0.1157s (Speedup: 4.60x)
+
+[Img 2048x2048] Serial:
+  Run 1: Cálculo=1.853s | Total=2.80s
+  Run 2: Cálculo=2.009s | Total=2.96s
+  Run 3: Cálculo=2.019s | Total=3.12s
+  -> Média Cálculo: 1.9603s
+[Img 2048x2048] MPI n=2:
+  Run 1: Cálculo=1.112s | Total=2.30s
+  Run 2: Cálculo=1.117s | Total=2.28s
+  Run 3: Cálculo=1.128s | Total=2.32s
+  -> Média Cálculo: 1.1190s (Speedup: 1.75x)
+[Img 2048x2048] MPI n=4:
+  Run 1: Cálculo=0.652s | Total=2.04s
+  Run 2: Cálculo=0.696s | Total=2.16s
+  Run 3: Cálculo=0.659s | Total=2.04s
+  -> Média Cálculo: 0.6693s (Speedup: 2.93x)
+[Img 2048x2048] MPI n=8:
+  Run 1: Cálculo=0.407s | Total=2.10s
+  Run 2: Cálculo=0.408s | Total=1.99s
+  Run 3: Cálculo=0.394s | Total=2.15s
+  -> Média Cálculo: 0.4027s (Speedup: 4.87x)
+
+[Img 4096x4096] Serial:
+  Run 1: Cálculo=7.634s | Total=8.62s
+  Run 2: Cálculo=8.146s | Total=9.12s
+  Run 3: Cálculo=8.232s | Total=9.37s
+  -> Média Cálculo: 8.0042s
+[Img 4096x4096] MPI n=2:
+  Run 1: Cálculo=4.525s | Total=5.90s
+  Run 2: Cálculo=4.178s | Total=5.32s
+  Run 3: Cálculo=4.848s | Total=5.98s
+  -> Média Cálculo: 4.5173s (Speedup: 1.77x)
+[Img 4096x4096] MPI n=4:
+  Run 1: Cálculo=2.519s | Total=3.81s
+  Run 2: Cálculo=2.513s | Total=3.70s
+  Run 3: Cálculo=2.461s | Total=3.75s
+  -> Média Cálculo: 2.4978s (Speedup: 3.20x)
+[Img 4096x4096] MPI n=8:
+  Run 1: Cálculo=1.635s | Total=3.38s
+  Run 2: Cálculo=1.545s | Total=3.11s
+  Run 3: Cálculo=1.517s | Total=2.98s
+  -> Média Cálculo: 1.5655s (Speedup: 5.11x)

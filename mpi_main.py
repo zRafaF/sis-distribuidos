@@ -3,12 +3,7 @@ import argparse
 import numpy as np
 import time
 from mpi4py import MPI
-from boxblur_logic import (
-    generate_box_blur_kernel,
-    apply_convolution,
-    KERNEL_SIZE,
-    HALO_SIZE,
-)
+from boxblur_logic import generate_box_blur_kernel, apply_convolution
 
 
 def main():
@@ -19,12 +14,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
     parser.add_argument("--size", type=int, required=True)
+    parser.add_argument("--kernel", type=int, default=15)
     parser.add_argument("--output", default="mpi_result.raw")
     args = parser.parse_args()
 
     N = args.size
+    KERNEL_SIZE = args.kernel
+    HALO_SIZE = KERNEL_SIZE // 2
 
-    # --- 1. Preparação ---
     local_rows = N // size
     full_data = None
     if rank == 0:
@@ -36,7 +33,6 @@ def main():
         except FileNotFoundError:
             sys.exit(1)
 
-    # --- 2. Scatter ---
     local_chunk = np.zeros((local_rows, N), dtype=np.uint8)
 
     if rank == 0:
@@ -44,7 +40,6 @@ def main():
 
     comm.Scatter(full_data, local_chunk, root=0)
 
-    # --- 3. Halo Exchange ---
     top_halo = np.zeros((HALO_SIZE, N), dtype=np.uint8)
     bottom_halo = np.zeros((HALO_SIZE, N), dtype=np.uint8)
 
@@ -67,7 +62,6 @@ def main():
 
     MPI.Request.Waitall(reqs)
 
-    # --- 4. Computação ---
     process_stack = []
     if rank > 0:
         process_stack.append(top_halo)
@@ -76,9 +70,9 @@ def main():
         process_stack.append(bottom_halo)
 
     compute_input = np.vstack(process_stack)
-    kernel = generate_box_blur_kernel(KERNEL_SIZE)
+    kernel_matrix = generate_box_blur_kernel(KERNEL_SIZE)
 
-    processed = apply_convolution(compute_input, kernel)
+    processed = apply_convolution(compute_input, kernel_matrix)
 
     start_row = HALO_SIZE if rank > 0 else 0
     end_row = processed.shape[0] - (HALO_SIZE if rank < size - 1 else 0)
@@ -87,7 +81,6 @@ def main():
         processed[start_row:end_row, :].clip(0, 255).astype(np.uint8)
     )
 
-    # --- 5. Gather ---
     final_image = None
     if rank == 0:
         final_image = np.zeros((local_rows * size, N), dtype=np.uint8)
@@ -96,7 +89,6 @@ def main():
 
     if rank == 0:
         duration = time.time() - start_time
-        # Correção Robusta: write + tobytes
         try:
             with open(args.output, "wb") as f:
                 f.write(final_image.tobytes())
